@@ -6,6 +6,6 @@
 | Nama | NPM | Fitur |
 | -- | -- | -- |
 | Rakabima Ghaniendra Rusdianto | 2306228472 | Hijau |
-|  |  | Kuning |
+| Gilbert Kristian | 2306274951 | Kuning |
 |  |  | Biru |
 |  |  | Merah |
