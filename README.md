@@ -1,7 +1,7 @@
 # Proyek-SIJARTA
 
-## Tugas Kelompok 4
-**Basis Data E - Kelompok 5**
+## Tugas Kelompok 3
+**Basis Data B - BASDUDES**
 
 | Nama | NPM | Fitur |
 | -- | -- | -- |
