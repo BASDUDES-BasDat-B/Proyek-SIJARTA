@@ -7,5 +7,5 @@
 | -- | -- | -- |
 | Rakabima Ghaniendra Rusdianto | 2306228472 | Hijau |
 | Gilbert Kristian | 2306274951 | Kuning |
-|  |  | Biru |
+| Ivan Jehuda Angi | 2306152222 | Biru |
 |  |  | Merah |
