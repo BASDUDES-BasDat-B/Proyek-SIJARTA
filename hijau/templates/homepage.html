@@ -9,8 +9,14 @@
     <div class="container mx-auto">
         <h1 class="text-4xl font-bold mb-4">Temukan Jasa & Layanan Terbaik</h1>
         <p class="text-lg mb-8">Platform yang menghubungkan Anda dengan penyedia jasa profesional</p>
-        <form action="{% url 'search' %}" method="GET" class="flex justify-center gap-2">
-            <input type="text" name="q" class="w-3/4 md:w-1/2 px-4 py-2 rounded-md text-gray-800" placeholder="Cari jasa atau layanan...">
+        <form action="#" method="GET" class="flex justify-center gap-2">
+            <select name="category" class="w-1/4 px-4 py-2 rounded-md text-gray-800">
+                <option value="">Pilih Kategori</option>
+                {% for category in categories %}
+                <option value="{{ category.slug }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="q" class="w-1/2 px-4 py-2 rounded-md text-gray-800" placeholder="Cari subkategori jasa...">
             <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-md">
                 <i class="fas fa-search"></i>
             </button>
@@ -30,47 +36,15 @@
                 </div>
                 <h3 class="text-lg font-bold mb-2">{{ category.name }}</h3>
                 <p class="text-gray-600 mb-4">{{ category.description }}</p>
-                <a href="{% url 'category_services' category.slug %}" class="text-blue-500 hover:underline">Lihat Semua</a>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- Featured Services Section -->
-<section class="py-12 bg-gray-100">
-    <div class="container mx-auto px-4">
-        <h2 class="text-2xl font-bold text-center mb-8">Layanan Unggulan</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for service in featured_services %}
-            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-                <img src="{{ service.image.url }}" alt="{{ service.name }}" class="w-full h-48 object-cover">
-                <div class="p-6">
-                    <h3 class="text-lg font-bold mb-2">{{ service.name }}</h3>
-                    <p class="text-blue-500 font-bold mb-2">Mulai dari Rp {{ service.price|floatformat:0|intcomma }}</p>
-                    <p class="text-gray-600 mb-4">{{ service.description|truncatewords:20 }}</p>
-                    <a href="{% url 'service_detail' service.slug %}" class="text-blue-500 hover:underline">Lihat Detail</a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- Testimonials Section -->
-<section class="py-12">
-    <div class="container mx-auto px-4">
-        <h2 class="text-2xl font-bold text-center mb-8">Apa Kata Mereka?</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for testimonial in testimonials %}
-            <div class="bg-white shadow-lg rounded-lg p-6">
-                <p class="italic mb-4">"{{ testimonial.content }}"</p>
-                <div class="flex items-center gap-4">
-                    <img src="{{ testimonial.user.profile_picture.url }}" alt="{{ testimonial.user.name }}" class="w-12 h-12 rounded-full object-cover">
-                    <div>
-                        <h4 class="font-bold">{{ testimonial.user.name }}</h4>
-                        <p class="text-gray-500 text-sm">{{ testimonial.service.name }}</p>
-                    </div>
+                <div>
+                    <h4 class="text-md font-bold mb-2">Subkategori:</h4>
+                    <ul>
+                        {% for subcategory in category.subcategories %}
+                        <li>
+                            <a href="{% url 'subcategory_detail' category.slug subcategory.slug %}" class="text-blue-500 hover:underline">{{ subcategory.name }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
             {% endfor %}
