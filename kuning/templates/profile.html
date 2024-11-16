@@ -23,20 +23,18 @@
                 <p class="text-lg sm:text-xl">Rating: {{ request.session.user.rating }}</p>
                 <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ request.session.user.orders_completed }}</p>
                 <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
-                <ul class="list-disc pl-6 sm:pl-8 text-lg sm:text-xl">
+                <div class="text-lg sm:text-xl space-y-1 text-center">
                     {% for category in request.session.user.job_categories %}
-                        <li>{{ category }}</li>
+                        <div>{{ category }}</div>
                     {% endfor %}
-                </ul>
+                </div>
             {% endif %}
         </div>
 
-        <!-- Update Button -->
         <button onclick="toggleUpdateForm()" class="mt-4 mx-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 block">
             Update
         </button>
 
-        <!-- Update Form -->
         <div id="updateForm" class="hidden bg-gray-100 p-6 sm:p-8 border border-gray-300 rounded-lg space-y-4">
             <form method="post" class="space-y-4">
                 {% csrf_token %}
@@ -84,8 +82,11 @@
 
 <script>
     function toggleUpdateForm() {
+        event.preventDefault(); // Mencegah event default
         const form = document.getElementById('updateForm');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        if(form) {
+            form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+        }
     }
 </script>
 {% endblock %}

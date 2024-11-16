@@ -22,7 +22,7 @@
                         <li><a href="{% url 'edit_profile' %}" class="text-gray-700 hover:text-gray-900">Profile</a></li>
                         <li><a href="{% url 'logout' %}" class="text-gray-700 hover:text-gray-900">Logout</a></li>
                     {% elif request.session.user.role == 'pekerja' %}
-                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Homepage</a></li>
+                        <li><a href="{% url 'homepage' %}" class="text-gray-700 hover:text-gray-900">Homepage</a></li>
                         <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Pekerjaan Saya</a></li>
                         <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Status Pekerjaan</a></li>
                         <li><a href="#" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
@@ -54,7 +54,7 @@
                 <a href="{% url 'edit_profile' %}" class="block text-gray-700 hover:text-gray-900 py-2">Profile</a>
                 <a href="{% url 'logout' %}" class="block text-gray-700 hover:text-gray-900 py-2">Logout</a>
             {% elif request.session.user.role == 'pekerja' %}
-                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Homepage</a>
+                <a href="{% url 'homepage' %}" class="block text-gray-700 hover:text-gray-900 py-2">Homepage</a>
                 <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pekerjaan Saya</a>
                 <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Status Pekerjaan</a>
                 <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
