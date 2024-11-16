@@ -2,7 +2,7 @@ from django.urls import path
 from .views import homepage, subcategory_detail, view_pesanan, create_order, calculate_total, create_testimonial, cancel_order
 
 urlpatterns = [
-    path('', homepage, name='homepage'),
+    path('homepage/', homepage, name='homepage'),
     path('kategori/<str:category_slug>/<str:subcategory_slug>/', 
          subcategory_detail, 
          name='subcategory_detail'),

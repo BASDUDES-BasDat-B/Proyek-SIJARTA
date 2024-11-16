@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 import json
+from django.contrib.auth.decorators import login_required
 
 def homepage(request):
     # Dummy data for categories and subcategories - kept the same as it's well structured
@@ -25,6 +26,7 @@ def homepage(request):
 
     context = {
         'categories': categories,
+        "user": request.session.get("user"),  
     }
 
     return render(request, 'homepage.html', context)
