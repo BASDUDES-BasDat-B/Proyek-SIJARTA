@@ -14,7 +14,7 @@ def discount_view(request):
             "harga_voucher": 5.00
         },
         {
-            "kode": "VOUCHER20",
+            "kode": "vouchergagal",
             "potongan": 20.00,
             "minimum_transaksi": 100.00,
             "jumlah_kuota_penggunaan": 50,
