@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Transaksi MyPay{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+  <!-- Header Form -->
+  <div class="bg-gray-100 p-4 rounded-lg shadow-md mb-4">
+    <div class="text-xl font-semibold mb-2">Transaksi MyPay</div>
+    <p class="text-gray-600">Gunakan form ini untuk melakukan transaksi MyPay. Pilih kategori transaksi untuk menampilkan form yang sesuai.</p>
+  </div>
+
+  <!-- Dropdown Kategori Transaksi -->
+  <div class="bg-gray-100 p-4 rounded-lg shadow-md mb-6">
+    <label for="kategori" class="block text-gray-800 mb-2">Kategori Transaksi:</label>
+    <select id="kategori" name="kategori" class="w-full p-2 border rounded-md" onchange="updateForm()">
+      <option value="" disabled selected>-- Pilih Kategori --</option>
+      <option value="TopUp MyPay">TopUp MyPay</option>
+      <option value="Bayar Jasa">Bayar Jasa</option>
+      <option value="Transfer MyPay">Transfer MyPay</option>
+      <option value="Withdrawal">Withdrawal</option>
+    </select>
+  </div>
+
+  <!-- Form Berdasarkan Kategori -->
+  <div id="form-container">
+    <!-- State 1: TopUp MyPay -->
+    <div id="topup-form" class="hidden bg-gray-100 p-4 rounded-lg shadow-md">
+      <label for="nominal-topup" class="block text-gray-800">Nominal:</label>
+      <input type="number" id="nominal-topup" class="w-full p-2 border rounded-md" placeholder="Masukkan nominal">
+      <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">Top Up</button>
+    </div>
+
+    <!-- State 2: Bayar Jasa -->
+    <div id="bayar-jasa-form" class="hidden bg-gray-100 p-4 rounded-lg shadow-md">
+      <label for="jasa" class="block text-gray-800">Pesanan Jasa:</label>
+      <select id="jasa" class="w-full p-2 border rounded-md">
+        {% for jasa in jasa_list %}
+        <option value="{{ jasa }}">{{ jasa }}</option>
+        {% endfor %}
+      </select>
+      <label for="harga-jasa" class="block text-gray-800 mt-4">Harga Jasa:</label>
+      <input type="number" id="harga-jasa" class="w-full p-2 border rounded-md" placeholder="Masukkan harga">
+      <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">Bayar</button>
+    </div>
+
+    <!-- State 3: Transfer MyPay -->
+    <div id="transfer-form" class="hidden bg-gray-100 p-4 rounded-lg shadow-md">
+      <label for="nohp" class="block text-gray-800">No HP Tujuan:</label>
+      <input type="text" id="nohp" class="w-full p-2 border rounded-md" placeholder="Masukkan No HP">
+      <label for="nominal-transfer" class="block text-gray-800 mt-4">Nominal:</label>
+      <input type="number" id="nominal-transfer" class="w-full p-2 border rounded-md" placeholder="Masukkan nominal">
+      <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">Transfer</button>
+    </div>
+
+    <!-- State 4: Withdrawal -->
+    <div id="withdrawal-form" class="hidden bg-gray-100 p-4 rounded-lg shadow-md">
+      <label for="bank" class="block text-gray-800">Nama Bank:</label>
+      <select id="bank" class="w-full p-2 border rounded-md">
+        {% for bank in bank_list %}
+        <option value="{{ bank }}">{{ bank }}</option>
+        {% endfor %}
+      </select>
+      <label for="rekening" class="block text-gray-800 mt-4">No Rekening:</label>
+      <input type="text" id="rekening" class="w-full p-2 border rounded-md" placeholder="Masukkan No Rekening">
+      <label for="nominal-withdraw" class="block text-gray-800 mt-4">Nominal:</label>
+      <input type="number" id="nominal-withdraw" class="w-full p-2 border rounded-md" placeholder="Masukkan nominal">
+      <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">Withdraw</button>
+    </div>
+  </div>
+</div>
+
+<!-- Script untuk Mengatur State -->
+<script>
+  function updateForm() {
+    const kategori = document.getElementById('kategori').value;
+
+    // Hide all forms
+    document.getElementById('topup-form').classList.add('hidden');
+    document.getElementById('bayar-jasa-form').classList.add('hidden');
+    document.getElementById('transfer-form').classList.add('hidden');
+    document.getElementById('withdrawal-form').classList.add('hidden');
+
+    // Show specific form based on kategori
+    if (kategori === "TopUp MyPay") {
+      document.getElementById('topup-form').classList.remove('hidden');
+    } else if (kategori === "Bayar Jasa") {
+      document.getElementById('bayar-jasa-form').classList.remove('hidden');
+    } else if (kategori === "Transfer MyPay") {
+      document.getElementById('transfer-form').classList.remove('hidden');
+    } else if (kategori === "Withdrawal") {
+      document.getElementById('withdrawal-form').classList.remove('hidden');
+    }
+  }
+</script>
+{% endblock %}
