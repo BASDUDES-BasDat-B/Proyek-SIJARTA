@@ -1,0 +1,79 @@
+<nav class="bg-white shadow-md">
+    <div class="container mx-auto px-4 py-2 flex justify-between items-center">
+        <!-- Logo -->
+        <a href="{% if request.session.user.role %}{% url 'homepage' %}{% else %}{% url 'main' %}{% endif %}">
+            <div class="text-xl font-bold text-gray-800">SIJARTA</div>
+        </a>
+        <div class="flex items-center space-x-4">
+            <!-- Tampilkan nama dan role jika user login -->
+            {% if request.session.user %}
+                <div class="text-gray-700 font-medium">
+                    {{ request.session.user.nama }} ({{ request.session.user.role }})
+                </div>
+            {% endif %}
+            <!-- Desktop Navigation -->
+            <ul class="hidden md:flex space-x-4 items-center">
+                {% if request.session.user %}
+                    {% if request.session.user.role == 'pengguna' %}
+                        <li><a href="{% url 'homepage' %}" class="text-gray-700 hover:text-gray-900">Homepage</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Pesanan Saya</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Diskon</a></li>
+                        <li><a href="{% url 'edit_profile' %}" class="text-gray-700 hover:text-gray-900">Profile</a></li>
+                        <li><a href="{% url 'logout' %}" class="text-gray-700 hover:text-gray-900">Logout</a></li>
+                    {% elif request.session.user.role == 'pekerja' %}
+                        <li><a href="{% url 'homepage' %}" class="text-gray-700 hover:text-gray-900">Homepage</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Pekerjaan Saya</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Status Pekerjaan</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
+                        <li><a href="{% url 'edit_profile' %}" class="text-gray-700 hover:text-gray-900">Profile</a></li>
+                        <li><a href="{% url 'logout' %}" class="text-gray-700 hover:text-gray-900">Logout</a></li>
+                    {% endif %}
+                {% else %}
+                    <li><a href="{% url 'login' %}" class="text-gray-700 hover:text-gray-900">Login</a></li>
+                    <li><a href="{% url 'register' %}" class="text-gray-700 hover:text-gray-900">Register</a></li>
+                {% endif %}
+            </ul>
+            <!-- Hamburger Button -->
+            <button id="hamburger-btn" class="block md:hidden p-2 rounded-md hover:bg-gray-200 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="bg-white shadow-md py-2 px-4 md:hidden hidden">
+        {% if request.session.user %}
+            {% if request.session.user.role == 'pengguna' %}
+                <a href="{% url 'homepage' %}" class="block text-gray-700 hover:text-gray-900 py-2">Homepage</a>
+                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
+                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pesanan Saya</a>
+                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Diskon</a>
+                <a href="{% url 'edit_profile' %}" class="block text-gray-700 hover:text-gray-900 py-2">Profile</a>
+                <a href="{% url 'logout' %}" class="block text-gray-700 hover:text-gray-900 py-2">Logout</a>
+            {% elif request.session.user.role == 'pekerja' %}
+                <a href="{% url 'homepage' %}" class="block text-gray-700 hover:text-gray-900 py-2">Homepage</a>
+                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pekerjaan Saya</a>
+                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Status Pekerjaan</a>
+                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
+                <a href="{% url 'edit_profile' %}" class="block text-gray-700 hover:text-gray-900 py-2">Profile</a>
+                <a href="{% url 'logout' %}" class="block text-gray-700 hover:text-gray-900 py-2">Logout</a>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'login' %}" class="block text-gray-700 hover:text-gray-900 py-2">Login</a>
+            <a href="{% url 'register' %}" class="block text-gray-700 hover:text-gray-900 py-2">Register</a>
+        {% endif %}
+    </div>
+</nav>
+
+<script>
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    hamburgerBtn.addEventListener('click', () => {
+        // Toggle class to show or hide the mobile menu
+        mobileMenu.classList.toggle('hidden');
+    });
+</script>

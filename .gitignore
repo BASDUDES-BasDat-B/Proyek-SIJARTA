@@ -6,6 +6,9 @@ __pycache__
 __pycache__/
 db.sqlite3
 media
+*/migrations/*
+!*/migrations/__init__.py
+local_settings.py
 
 # Backup files
 *.bak
@@ -52,7 +55,8 @@ atlassian-ide-plugin.xml
 *$py.class
 
 # Distribution / packaging
-.Python build/
+.Python
+build/
 develop-eggs/
 dist/
 downloads/
@@ -85,6 +89,8 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+.coverage
+coverage/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -137,3 +143,9 @@ GitHub.sublime-settings
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+
+# Node.js
+node_modules/
+
+# Compiled static files
+staticfiles/

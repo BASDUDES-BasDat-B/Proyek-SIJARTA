@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}SIJARTA - REGISTRATION{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center h-[calc(100vh-6rem)]">
+    <div class="w-full max-w-md bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
+        <h1 class="text-xl font-bold text-center text-gray-800 mb-4">SIJARTA - Register</h1>
+        <form method="post" id="registerForm" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Pertanyaan Awal: Pilih Role -->
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700">Role:</label>
+                <select 
+                    id="role" 
+                    name="role" 
+                    onchange="showFormFields()" 
+                    class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                    <option value="">-- Pilih Role --</option>
+                    <option value="pengguna">Pengguna</option>
+                    <option value="pekerja">Pekerja</option>
+                </select>
+            </div>
+
+            <!-- Form Tambahan untuk Pengguna -->
+            <div id="penggunaFields" class="space-y-4" style="display: none;">
+                <h2 class="text-lg font-semibold text-gray-700">Form Pengguna</h2>
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Nama:</label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name" 
+                        required 
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password:</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Jenis Kelamin:</label>
+                    <div class="flex items-center space-x-4">
+                        <label>
+                            <input 
+                                type="radio" 
+                                name="gender" 
+                                value="L" 
+                                class="mr-2 focus:ring-blue-500"
+                            >
+                            L
+                        </label>
+                        <label>
+                            <input 
+                                type="radio" 
+                                name="gender" 
+                                value="P" 
+                                class="mr-2 focus:ring-blue-500"
+                            >
+                            P
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700">No HP:</label>
+                    <input 
+                        type="text" 
+                        id="phone" 
+                        name="phone" 
+                        required 
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+                <div>
+                    <label for="birthdate" class="block text-sm font-medium text-gray-700">Tanggal Lahir:</label>
+                    <input 
+                        type="date" 
+                        id="birthdate" 
+                        name="birthdate" 
+                        required 
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700">Alamat:</label>
+                    <textarea 
+                        id="address" 
+                        name="address" 
+                        rows="3" 
+                        required 
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    ></textarea>
+                </div>
+                <div>
+                    <label for="bank" class="block text-sm font-medium text-gray-700">Bank:</label>
+                    <select 
+                        id="bank" 
+                        name="bank" 
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="gopay">GoPay</option>
+                        <option value="ovo">OVO</option>
+                        <option value="bca">Virtual Account BCA</option>
+                        <option value="bni">Virtual Account BNI</option>
+                        <option value="mandiri">Virtual Account Mandiri</option>
+                    </select>
+                </div>
+            </div>
+
+<!-- Form Tambahan untuk Pekerja -->
+<div id="pekerjaFields" class="space-y-4" style="display: none;">
+    <h2 class="text-lg font-semibold text-gray-700">Form Pekerja</h2>
+    
+    <div>
+        <label for="name" class="block text-sm font-medium text-gray-700">Nama:</label>
+        <input 
+            type="text" 
+            id="name" 
+            name="name" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+    </div>
+
+    <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Password:</label>
+        <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+    </div>
+
+    <div>
+        <label for="gender" class="block text-sm font-medium text-gray-700">Jenis Kelamin:</label>
+        <select 
+            id="gender" 
+            name="gender" 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+            <option value="">-- Pilih Jenis Kelamin --</option>
+            <option value="L">L</option>
+            <option value="P">P</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="phone" class="block text-sm font-medium text-gray-700">No HP:</label>
+        <input 
+            type="text" 
+            id="phone" 
+            name="phone" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+    </div>
+
+    <div>
+        <label for="birthdate" class="block text-sm font-medium text-gray-700">Tanggal Lahir:</label>
+        <input 
+            type="date" 
+            id="birthdate" 
+            name="birthdate" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+    </div>
+
+    <div>
+        <label for="address" class="block text-sm font-medium text-gray-700">Alamat:</label>
+        <textarea 
+            id="address" 
+            name="address" 
+            rows="3" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        ></textarea>
+    </div>
+
+    <div>
+        <label for="bank" class="block text-sm font-medium text-gray-700">Nama Bank:</label>
+        <select 
+            id="bank" 
+            name="bank" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+            <option value="">-- Pilih Bank --</option>
+            <option value="gopay">GoPay</option>
+            <option value="ovo">OVO</option>
+            <option value="bca">Virtual Account BCA</option>
+            <option value="bni">Virtual Account BNI</option>
+            <option value="mandiri">Virtual Account Mandiri</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="account_number" class="block text-sm font-medium text-gray-700">Nomor Rekening:</label>
+        <input 
+            type="text" 
+            id="account_number" 
+            name="account_number" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+    </div>
+
+    <div>
+        <label for="photo_url" class="block text-sm font-medium text-gray-700">URL Foto:</label>
+        <input 
+            type="url" 
+            id="photo_url" 
+            name="photo_url" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+    </div>
+
+    <div>
+        <label for="npwp" class="block text-sm font-medium text-gray-700">NPWP:</label>
+        <input 
+            type="text" 
+            id="npwp" 
+            name="npwp" 
+            required 
+            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+    </div>
+</div>
+
+
+            <!-- Tombol Submit -->
+            <button 
+                type="submit" 
+                id="submitButton" 
+                style="display: none;" 
+                class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+            >
+                Register
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showFormFields() {
+        const role = document.getElementById('role').value;
+        const penggunaFields = document.getElementById('penggunaFields');
+        const pekerjaFields = document.getElementById('pekerjaFields');
+        const submitButton = document.getElementById('submitButton');
+
+        penggunaFields.style.display = 'none';
+        pekerjaFields.style.display = 'none';
+        submitButton.style.display = 'none';
+
+        if (role === 'pengguna') {
+            penggunaFields.style.display = 'block';
+            submitButton.style.display = 'block';
+        } else if (role === 'pekerja') {
+            pekerjaFields.style.display = 'block';
+            submitButton.style.display = 'block';
+        }
+    }
+</script>
+{% endblock %}
