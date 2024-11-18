@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}MyPay{% endblock %}
+
+{% block content %}
+
+  <div class="container mx-auto p-6">
+    <div class="flex justify-between items-center bg-gray-100 p-4 rounded-lg shadow-md">
+      <div class="text-lg font-medium">Saldo MyPay: Rp 1,000,000</div>
+      <a href="/transaksi-form/" class="px-4 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-900">
+        Lakukan Transaksi
+      </a>
+    </div>
+
+    <div class="mt-6">
+      <div class="text-lg font-bold mb-4">Riwayat Transaksi</div>
+      {% for transaction in transactions %}
+      <div class="bg-gray-100 p-4 rounded-lg shadow-md mb-4">
+        <div class="flex justify-between">
+          <div class="font-medium">{{ transaction.nominal }}</div>
+          <div class="text-gray-600">{{ transaction.tanggal }}</div>
+          <div class="text-gray-800 font-medium">{{ transaction.kategori }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}
