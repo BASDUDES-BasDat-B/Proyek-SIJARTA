@@ -16,16 +16,16 @@
                 {% if request.session.user %}
                     {% if request.session.user.role == 'pengguna' %}
                         <li><a href="{% url 'homepage' %}" class="text-gray-700 hover:text-gray-900">Homepage</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
+                        <li><a href="{% url 'transaksi_list' %}" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
                         <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Pesanan Saya</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Diskon</a></li>
+                        <li><a href="{% url 'discount' %}" class="text-gray-700 hover:text-gray-900">Diskon</a></li>
                         <li><a href="{% url 'edit_profile' %}" class="text-gray-700 hover:text-gray-900">Profile</a></li>
                         <li><a href="{% url 'logout' %}" class="text-gray-700 hover:text-gray-900">Logout</a></li>
                     {% elif request.session.user.role == 'pekerja' %}
                         <li><a href="{% url 'homepage' %}" class="text-gray-700 hover:text-gray-900">Homepage</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Pekerjaan Saya</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Status Pekerjaan</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
+                        <li><a href="{% url 'pekerjaan_jasa' %}" class="text-gray-700 hover:text-gray-900">Kelola Pekerjaan Saya</a></li>
+                        <li><a href="{% url 'status_pekerjaan_jasa' %}" class="text-gray-700 hover:text-gray-900">Kelola Status Pekerjaan</a></li>
+                        <li><a href="{% url 'transaksi_list' %}" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
                         <li><a href="{% url 'edit_profile' %}" class="text-gray-700 hover:text-gray-900">Profile</a></li>
                         <li><a href="{% url 'logout' %}" class="text-gray-700 hover:text-gray-900">Logout</a></li>
                     {% endif %}
@@ -48,16 +48,16 @@
         {% if request.session.user %}
             {% if request.session.user.role == 'pengguna' %}
                 <a href="{% url 'homepage' %}" class="block text-gray-700 hover:text-gray-900 py-2">Homepage</a>
-                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
+                <a href="{% url 'transaksi_list' %}" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
                 <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pesanan Saya</a>
-                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Diskon</a>
+                <a href="{% url 'discount' %}" class="block text-gray-700 hover:text-gray-900 py-2">Diskon</a>
                 <a href="{% url 'edit_profile' %}" class="block text-gray-700 hover:text-gray-900 py-2">Profile</a>
                 <a href="{% url 'logout' %}" class="block text-gray-700 hover:text-gray-900 py-2">Logout</a>
             {% elif request.session.user.role == 'pekerja' %}
                 <a href="{% url 'homepage' %}" class="block text-gray-700 hover:text-gray-900 py-2">Homepage</a>
-                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pekerjaan Saya</a>
-                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Status Pekerjaan</a>
-                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
+                <a href="{% url 'pekerjaan_jasa' %}" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pekerjaan Saya</a>
+                <a href="{% url 'status_pekerjaan_jasa' %}" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Status Pekerjaan</a>
+                <a href="{% url 'transaksi_list' %}" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
                 <a href="{% url 'edit_profile' %}" class="block text-gray-700 hover:text-gray-900 py-2">Profile</a>
                 <a href="{% url 'logout' %}" class="block text-gray-700 hover:text-gray-900 py-2">Logout</a>
             {% endif %}
