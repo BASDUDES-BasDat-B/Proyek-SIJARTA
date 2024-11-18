@@ -21,5 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('kuning.urls')),
     path('', include('hijau.urls')),
+    path('', include('Blue.urls')),
     path('', include('merah.urls')),
 ]
