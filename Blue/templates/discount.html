@@ -23,14 +23,14 @@
                 // Failure case
                 popupMessage.innerHTML = `Gagal membeli voucher dengan kode <strong>${kode}</strong>. Silakan coba lagi.`;
                 popupMessage.classList.add("text-red-700");
-                popupTitle.innerHTML = "Informasi Pembelian Gagal";
+                popupTitle.innerHTML = "Gagal";
                 popupTitle.classList.add("text-red-700");
             } else {
                 // Success case
                 popupMessage.innerHTML = `Sukses membeli voucher <strong>${kode}</strong>. 
                     Akan berlaku sampai tanggal <strong>${hariBerlaku}</strong> dengan kuota <strong>${kuota}</strong>.`;
                 popupMessage.classList.add("text-green-700");
-                popupTitle.innerHTML = "Informasi Pembelian Berhasil";
+                popupTitle.innerHTML = "Berhasil";
                 popupTitle.classList.add("text-green-700");
             }
 
