@@ -14,7 +14,7 @@
                     {% if request.session.user.role == 'pengguna' %}
                         <li><a href="{% url 'homepage' %}" class="text-gray-700 hover:text-gray-900">Homepage</a></li>
                         <li><a href="{% url 'transaksi_list' %}" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-gray-900">Kelola Pesanan Saya</a></li>
+                        <li><a href="{% url 'view_pesanan' %}" class="text-gray-700 hover:text-gray-900">Kelola Pesanan Saya</a></li>
                         <li><a href="{% url 'discount' %}" class="text-gray-700 hover:text-gray-900">Diskon</a></li>
                         <li><a href="{% url 'edit_profile' %}" class="text-gray-700 hover:text-gray-900">Profile</a></li>
                         <li><a href="{% url 'logout' %}" class="text-gray-700 hover:text-gray-900">Logout</a></li>
@@ -45,7 +45,7 @@
             {% if request.session.user.role == 'pengguna' %}
                 <a href="{% url 'homepage' %}" class="block text-gray-700 hover:text-gray-900 py-2">Homepage</a>
                 <a href="{% url 'transaksi_list' %}" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
-                <a href="#" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pesanan Saya</a>
+                <a href="{% url 'view_pesanan' %}" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pesanan Saya</a>
                 <a href="{% url 'discount' %}" class="block text-gray-700 hover:text-gray-900 py-2">Diskon</a>
                 <a href="{% url 'edit_profile' %}" class="block text-gray-700 hover:text-gray-900 py-2">Profile</a>
                 <a href="{% url 'logout' %}" class="block text-gray-700 hover:text-gray-900 py-2">Logout</a>
