@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'hijau',
     'kuning',
-    'Blue'
+    'Blue',
     'merah'
 ]
 
