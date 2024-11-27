@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 import os
 
 ## Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -123,3 +124,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DATABASE_CONFIG = {
+    'dbname': config('DB_NAME'),
+    'user': config('DB_USER'),
+    'password': config('DB_PASSWORD'),
+    'host': config('DB_HOST', default='localhost'),
+    'port': config('DB_PORT', cast=int, default=5432),
+}
+
