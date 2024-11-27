@@ -1,22 +1,51 @@
 from django.shortcuts import render
+from utils.db_connection import get_db_connection
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 
+
+def execute_query(sql_query, params=None):
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(sql_query, params or [])
+            return cursor.fetchall()
+        
+
+@login_required(login_url='/login/')
 def transaksi_list(request):
-    transactions = [
-        {"nominal": "+500,000", "tanggal": "2024-11-01", "kategori": "TopUp MyPay"},
-        {"nominal": "-100,000", "tanggal": "2024-11-02", "kategori": "Bayar Jasa"},
-        {"nominal": "+200,000", "tanggal": "2024-11-03", "kategori": "TopUp MyPay"},
-        {"nominal": "-300,000", "tanggal": "2024-11-04", "kategori": "Transfer MyPay"},
-        {"nominal": "-150,000", "tanggal": "2024-11-05", "kategori": "Withdrawal"},
-        {"nominal": "+100,000", "tanggal": "2024-11-06", "kategori": "TopUp MyPay"},
-        {"nominal": "-50,000", "tanggal": "2024-11-07", "kategori": "Bayar Jasa"},
-        {"nominal": "-75,000", "tanggal": "2024-11-08", "kategori": "Withdrawal"},
-        {"nominal": "-125,000", "tanggal": "2024-11-09", "kategori": "Transfer MyPay"},
-        {"nominal": "+500,000", "tanggal": "2024-11-10", "kategori": "TopUp MyPay"},
+    user_id = request.user.id  # Get the currently logged-in user's ID
+    
+    # Query to fetch saldo_mypay (balance)
+    saldo_query = "SELECT saldomypay FROM \"USER\" WHERE id = %s"
+    saldo_result = execute_query(saldo_query, (user_id,))
+    saldo_mypay = saldo_result[0][0] if saldo_result else 0
+
+    # Query to fetch transaction history
+    transactions_query = """
+        SELECT t.nominal, t.tgl, k.nama as kategori
+        FROM tr_mypay t
+        JOIN kategori_tr_mypay k ON t.kategoriid = k.id
+        WHERE t.userid = %s
+        ORDER BY t.tgl DESC
+    """
+    transactions_result = execute_query(transactions_query, (user_id,))
+
+    # Prepare the transaction data
+    transactions_data = [
+        {
+            'nominal': trans[0],
+            'tanggal': trans[1],
+            'kategori': trans[2],
+        }
+        for trans in transactions_result
     ]
 
+    # Prepare the context for the template
     context = {
-        'transactions': transactions,
+        'saldo_mypay': saldo_mypay,
+        'transactions': transactions_data,
     }
+
     return render(request, 'transaksi_mypay.html', context)
 
 def transaksi_form(request):
