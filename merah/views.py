@@ -1,7 +1,11 @@
-from django.shortcuts import render
+from django.contrib import messages
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
 from utils.db_connection import get_db_connection
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+import uuid
+from datetime import datetime
 
 
 def execute_query(sql_query, params=None):
@@ -11,9 +15,11 @@ def execute_query(sql_query, params=None):
             return cursor.fetchall()
         
 
-@login_required(login_url='/login/')
+#@login_required(login_url='/login/')
 def transaksi_list(request):
-    user_id = request.user.id  # Get the currently logged-in user's ID
+    # user_id = request.user.id  # Get the currently logged-in user's ID
+
+    user_id = "f02cceac-7781-4652-9780-cacf74680211"
     
     # Query to fetch saldo_mypay (balance)
     saldo_query = "SELECT saldomypay FROM \"USER\" WHERE id = %s"
@@ -48,15 +54,228 @@ def transaksi_list(request):
 
     return render(request, 'transaksi_mypay.html', context)
 
-def transaksi_form(request):
-    kategori = request.GET.get('kategori', '')  
-    jasa_list = ["Jasa Cleaning", "Jasa Design", "Jasa Programming"]  
-    bank_list = ["Bank BCA", "Bank BRI", "Bank BNI"]  
+def check_user_type(user_id):
+    pekerja_query = "SELECT id FROM pekerja WHERE id = %s"
+    result = execute_query(pekerja_query, [user_id])
+    return 'pekerja' if result else 'pelanggan'
 
+# Method helper untuk transaksi (commit query)
+def execute_transaction(sql_query, params=None):
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(sql_query, params or [])
+            conn.commit()
+
+
+def transaksi_form(request):
+    # Assuming you get the user ID from the logged-in user
+    user_id = "f02cceac-7781-4652-9780-cacf74680211"
+    user_type = check_user_type(user_id)
+
+    # Mendapatkan daftar pesanan jasa untuk dropdown State 2 jika user adalah pelanggan
+    jasa_list = []
+    if user_type == 'pelanggan':
+        jasa_query = """
+            SELECT 
+                pj.id, 
+                sj.namasubkategori, 
+                sl.harga, 
+                d.potongan
+            FROM 
+                tr_pemesanan_jasa pj
+            JOIN 
+                tr_pemesanan_status pjs ON pj.id = pjs.idtrpemesanan
+            JOIN 
+                status_pemesanan sp ON pjs.idstatus = sp.id
+            JOIN 
+                metode_bayar mb ON pj.idmetodebayar = mb.id
+            JOIN 
+                sesi_layanan sl ON pj.idkategorijasa = sl.subkategoriid
+            JOIN 
+                subkategori_jasa sj ON sl.subkategoriid = sj.id
+            JOIN 
+                diskon d ON pj.iddiskon = d.kode
+            WHERE 
+                pj.idpelanggan = %s AND
+                sp.status = 'Menunggu Pembayaran' AND
+                mb.nama = 'MyPay'
+            GROUP BY 
+                pj.id, sj.namasubkategori, sl.harga, d.potongan
+        """
+        jasa_result = execute_query(jasa_query, [user_id])
+        # Menghitung harga setelah diskon
+        for row in jasa_result:
+            jasa_id = row[0]
+            nama_jasa = row[1]
+            harga = row[2]
+            potongan = row[3]
+            harga_setelah_diskon = harga * (1 - potongan)
+            jasa_list.append({
+                'id': jasa_id,
+                'nama': nama_jasa,
+                'harga_setelah_diskon': int(harga_setelah_diskon)  # Ubah sesuai kebutuhan format
+            })
+
+    bank_list = ['BCA', 'BNI', 'BRI', 'Mandiri']
+
+    if request.method == 'POST':
+        kategori = request.POST.get('kategori')
+        nominal = request.POST.get('nominal')
+
+        kategori_id = execute_query(
+            "SELECT id FROM kategori_tr_mypay WHERE nama = %s", 
+            [kategori]
+        )[0][0]
+
+        # Mendapatkan waktu transaksi
+        tgl_transaksi = datetime.now()
+
+        if kategori == "TopUp MyPay":
+            execute_transaction(
+                "UPDATE \"USER\" SET saldomypay = saldomypay + %s WHERE id = %s",
+                [nominal, user_id]
+            )
+            tr_mypay_id = str(uuid.uuid4())
+            execute_transaction(
+                """
+                INSERT INTO tr_mypay (id, userid, tgl, nominal, kategoriid)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                [tr_mypay_id, user_id, tgl_transaksi, nominal, kategori_id]
+            )
+
+            # Tambahkan pesan sukses
+            messages.success(request, 'Top Up MyPay berhasil dilakukan.')
+
+        elif kategori == "Bayar Jasa" and user_type == 'pelanggan':
+            jasa_id = request.POST.get('jasa_id')
+
+            # Mendapatkan total biaya dari tr_pemesanan_jasa
+            biaya_query = "SELECT totalbiaya FROM tr_pemesanan_jasa WHERE id = %s"
+            biaya_result = execute_query(biaya_query, [jasa_id])
+            total_biaya = biaya_result[0][0] if biaya_result else 0
+
+            # Memeriksa saldo MyPay
+            saldo_query = "SELECT saldomypay FROM \"USER\" WHERE id = %s"
+            saldo_result = execute_query(saldo_query, (user_id,))
+            saldo_mypay = saldo_result[0][0] if saldo_result else 0
+
+            if saldo_mypay >= total_biaya:
+                # Kurangi saldo
+                execute_transaction(
+                    "UPDATE \"USER\" SET saldomypay = saldomypay - %s WHERE id = %s",
+                    [total_biaya, user_id]
+                )
+
+                tr_mypay_id = str(uuid.uuid4())
+                execute_transaction(
+                    """
+                    INSERT INTO tr_mypay (id, userid, tgl, nominal, kategoriid)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    [tr_mypay_id, user_id, tgl_transaksi, total_biaya, kategori_id]
+                )
+
+                # Update status pemesanan menjadi "Mencari Pekerja Terdekat"
+                # Mendapatkan id status "Mencari Pekerja Terdekat"
+                status_query = "SELECT id FROM status_pemesanan WHERE status = 'Mencari Pekerja Terdekat'"
+                status_result = execute_query(status_query)
+                status_id = status_result[0][0] if status_result else None
+
+                if status_id:
+                    execute_transaction(
+                        """
+                        INSERT INTO tr_pemesanan_status (idtrpemesanan, idstatus, tglwaktu)
+                        VALUES (%s, %s, NOW())
+                        """,
+                        [jasa_id, status_id]
+                    )
+                messages.success(request, 'Pembayaran Jasa berhasil dilakukan.')
+            else:
+                # Tambahkan pesan error: saldo tidak cukup
+                context = {
+                    'error': 'Saldo MyPay Anda tidak cukup untuk melakukan pembayaran ini.',
+                    'jasa_list': jasa_list,
+                    'bank_list': bank_list,
+                }
+                return render(request, 'transaksi_form.html', context)
+            
+        elif kategori == "Transfer MyPay":
+            nohp = request.POST.get('nohp')
+            nominal_transfer = request.POST.get('nominal-transfer')
+
+            target_user = execute_query(
+                "SELECT id FROM \"USER\" WHERE nohp = %s",
+                [nohp]
+            )
+            if not target_user:
+                return JsonResponse({'error': 'Nomor HP tidak ditemukan'}, status=400)
+            
+            target_user_id = target_user[0][0]
+            
+            execute_transaction(
+                'UPDATE "USER" SET saldomypay = saldomypay - %s WHERE id = %s',
+                [nominal, user_id]
+            )
+            execute_transaction(
+                'UPDATE "USER" SET saldomypay = saldomypay + %s WHERE id = %s',
+                [nominal, target_user_id]
+            )
+
+            # Insert ke tr_mypay untuk pengirim
+            tr_mypay_id_sender = str(uuid.uuid4())
+            execute_transaction(
+                """
+                INSERT INTO tr_mypay (id, userid, tgl, nominal, kategoriid)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                [tr_mypay_id_sender, user_id, tgl_transaksi, -nominal_transfer, kategori_id]
+            )
+            # Insert ke tr_mypay untuk penerima
+            tr_mypay_id_receiver = str(uuid.uuid4())
+            execute_transaction(
+                """
+                INSERT INTO tr_mypay (id, userid, tgl, nominal, kategoriid)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                [tr_mypay_id_receiver, target_user_id, tgl_transaksi, nominal_transfer, kategori_id]
+            )
+            # Tambahkan pesan sukses
+            messages.success(request, 'Transfer MyPay berhasil dilakukan.')
+
+        elif kategori == "Withdrawal":
+            nominal_withdraw = request.POST.get('nominal-withdraw')
+            execute_transaction(
+                'UPDATE "USER" SET saldomypay = saldomypay - %s WHERE id = %s',
+                [nominal, user_id]
+            )
+
+            # Insert ke tr_mypay
+            tr_mypay_id = str(uuid.uuid4())
+            execute_transaction(
+                """
+                INSERT INTO tr_mypay (id, userid, tgl, nominal, kategoriid)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                [tr_mypay_id, user_id, tgl_transaksi, -nominal_withdraw, kategori_id]
+            )
+            # Tambahkan pesan sukses
+            messages.success(request, 'Withdrawal berhasil dilakukan.')
+
+
+    # Mendapatkan daftar kategori transaksi
+    categories = [
+        ('TopUp MyPay', 'TopUp MyPay'),
+        ('Bayar Jasa', 'Bayar Jasa'),
+        ('Transfer MyPay', 'Transfer MyPay'),
+        ('Withdrawal', 'Withdrawal'),
+    ]
+
+    # Menyiapkan konteks untuk template
     context = {
-        "kategori": kategori,
-        "jasa_list": jasa_list,
-        "bank_list": bank_list,
+        'categories': categories,
+        'jasa_list': jasa_list,
+        'bank_list': bank_list,
     }
     return render(request, 'transaksi_form.html', context)
 
