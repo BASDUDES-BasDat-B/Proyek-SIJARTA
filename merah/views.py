@@ -303,7 +303,7 @@ def pekerjaan_jasa(request):
             SELECT 
                 t.id, 
                 s.namasubkategori, 
-                u.name AS nama_pelanggan, 
+                u.nama AS nama_pelanggan, 
                 t.tglpemesanan, 
                 t.sesi, 
                 t.totalbiaya, 
@@ -327,7 +327,7 @@ def pekerjaan_jasa(request):
             SELECT 
                 t.id, 
                 s.namasubkategori, 
-                u.name AS nama_pelanggan, 
+                u.nama AS nama_pelanggan, 
                 t.tglpemesanan, 
                 t.sesi, 
                 t.totalbiaya, 
@@ -426,7 +426,7 @@ def status_pekerjaan_jasa(request):
         SELECT 
             pj.id, 
             sj.namasubkategori, 
-            u.name AS nama_pelanggan, 
+            u.nama AS nama_pelanggan, 
             pj.tglpemesanan, 
             pj.tglpekerjaan, 
             pj.totalbiaya,
