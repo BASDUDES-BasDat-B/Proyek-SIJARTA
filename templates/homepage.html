@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SIJARTA - Platform Jasa & Layanan Terpercaya{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white text-center py-20">
+    <div class="container mx-auto">
+        <h1 class="text-4xl font-bold mb-4">Temukan Jasa & Layanan Terbaik</h1>
+        <p class="text-lg mb-8">Platform yang menghubungkan Anda dengan penyedia jasa profesional</p>
+        <form action="{% url 'homepage' %}" method="GET" class="flex justify-center gap-2">
+            <select name="category" class="w-1/4 px-4 py-2 rounded-md text-gray-800">
+                <option value="">Pilih Kategori</option>
+                {% for category in categories %}
+                    <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>{{ category.nama_kategori }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="q" class="w-1/2 px-4 py-2 rounded-md text-gray-800" placeholder="Cari subkategori jasa..." value="{{ request.GET.q }}">
+            <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-md">
+                <i class="fas fa-search"></i>
+            </button>
+        </form>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-12">
+    <div class="container mx-auto px-4">
+        <h2 class="text-2xl font-bold text-center mb-8">Kategori Layanan</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {% for category in categories %}
+            <div class="bg-white shadow-lg rounded-lg p-6 text-center">
+                <div class="text-blue-500 text-3xl mb-4">
+                    <i class="{{ category.icon }}"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">{{ category.nama_kategori }}</h3>
+                <p class="text-gray-600 mb-4">{{ category.subcategories|length }} Subkategori</p>
+                <div>
+                    <h4 class="text-md font-bold mb-2">Subkategori:</h4>
+                    <ul>
+                        {% for subcategory in category.subcategories %}
+                        <li>
+                            <a href="{% url 'subcategory_detail' category.slug subcategory.slug %}" class="text-blue-500 hover:underline">{{ subcategory.nama_subkategori }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

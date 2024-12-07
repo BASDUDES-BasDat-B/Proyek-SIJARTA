@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Status Pekerjaan Jasa{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="bg-blue-500 text-white py-6 mb-6">
+    <div class="max-w-4xl mx-auto px-4">
+        <h1 class="text-2xl font-bold text-center">Status Pekerjaan Jasa</h1>
+        <p class="text-center mt-2">Pantau dan ubah status pesanan jasa yang sedang Anda kerjakan.</p>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<form method="get" class="mb-4 max-w-lg mx-auto">
+    <label for="nama_jasa" class="block mb-2 font-medium">Nama Jasa:</label>
+    <input type="text" name="nama_jasa" id="nama_jasa" placeholder="Masukkan Nama Jasa" value="{{ request.GET.nama_jasa }}" class="p-2 border rounded w-full mb-4">
+
+    <label for="status" class="block mb-2 font-medium">Filter Status:</label>
+    <select name="status" id="status" class="p-2 border rounded w-full mb-4">
+        <option value="">-- Semua Status --</option>
+        {% for status, label in status_choices %}
+            <option value="{{ status }}" {% if status == request.GET.status %}selected{% endif %}>
+                {{ label }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <div class="text-center">
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Search</button>
+    </div>
+</form>
+
+<!-- Daftar Pesanan Section -->
+<div class="max-w-3xl mx-auto">
+    {% for pesanan in pesanan_list %}
+    <div class="border rounded p-4 mb-6 shadow-md">
+        <p><strong>Nama Subkategori:</strong> {{ pesanan.subkategori }}</p>
+        <p><strong>Nama Pelanggan:</strong> {{ pesanan.nama_pelanggan }}</p>
+        <p><strong>Tanggal Pemesanan:</strong> {{ pesanan.tanggal_pemesanan }}</p>
+        <p><strong>Tanggal Pekerjaan:</strong> {{ pesanan.tanggal_pekerjaan }}</p>
+        <p><strong>Total Biaya:</strong> Rp {{ pesanan.total_biaya }}</p>
+        <p><strong>Status:</strong> {{ pesanan.status }}</p>
+
+        <!-- Tombol Status -->
+        <div class="flex justify-center gap-4 mt-4">
+            {% if pesanan.status == "Mencari Pekerja Terdekat" %}
+                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pekerja Menuju Lokasi' %}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Tiba Di Lokasi</a>
+            {% elif pesanan.status == "Pekerja Menuju Lokasi" %}
+                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pekerja Mulai Pekerjaan' %}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Melakukan Pelayanan Jasa</a>
+            {% elif pesanan.status == "Pekerja Mulai Pekerjaan" %}
+                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pemesanan Selesai' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Selesai</a>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-center text-gray-600">Tidak ada pesanan yang ditemukan.</p>
+    {% endfor %}
+</div>
+{% endblock %}

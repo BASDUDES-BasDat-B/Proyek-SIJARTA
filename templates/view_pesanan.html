@@ -1,0 +1,192 @@
+<!-- hijau/templates/hijau/view_pemesanan.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daftar Pesanan - SIJARTA{% endblock %}
+
+{% block content %}
+<!-- Definisikan URL sebagai variabel -->
+{% url 'cancel_order' 'ORDER_ID_PLACEHOLDER' as cancel_order_url %}
+{% url 'create_testimonial' as create_testimonial_url %}
+
+<section class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-blue-800">Daftar Pesanan Jasa</h1>
+            
+            <!-- Filter and Search -->
+            <div class="flex gap-4">
+                <select class="border rounded-lg px-4 py-2" id="filter-subcategory">
+                    <option value="">Subkategori</option>
+                    {% for category in categories %}
+                    {% for sub in category.subcategories %}
+                    <option value="{{ sub.id }}">{{ sub.nama_subkategori }}</option>
+                    {% endfor %}
+                    {% endfor %}
+                </select>
+                
+                <select class="border rounded-lg px-4 py-2" id="filter-status">
+                    <option value="">Status Pesanan</option>
+                    <option value="waiting_payment">Menunggu Pembayaran</option>
+                    <option value="finding_worker">Mencari Pekerja Terdekat</option>
+                    <option value="in_progress">Sedang Dikerjakan</option>
+                    <option value="completed">Pesanan Selesai</option>
+                    <option value="cancelled">Dibatalkan</option>
+                </select>
+
+                <input type="text" 
+                       placeholder="Search..." 
+                       class="border rounded-lg px-4 py-2" id="search-query">
+            </div>
+        </div>
+
+        <!-- Orders List -->
+        <div class="space-y-4" id="orders-list">
+            {% for order in orders %}
+            <div class="border rounded-lg p-4">
+                <div class="grid grid-cols-5 gap-4">
+                    <div>
+                        <div class="font-semibold">{{ order.nama_subkategori }}</div>
+                        <div class="text-sm text-gray-600">{{ order.service_session_name }}</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold">Rp {{ order.total_payment|floatformat:0 }}</div>
+                        <div class="text-sm text-gray-600">{{ order.worker_name|default:"Belum ada pekerja" }}</div>
+                    </div>
+                    <div class="text-center">
+                        <span class="px-3 py-1 rounded-full text-sm
+                            {% if order.status == 'waiting_payment' %}
+                                bg-yellow-100 text-yellow-800
+                            {% elif order.status == 'finding_worker' %}
+                                bg-blue-100 text-blue-800
+                            {% elif order.status == 'in_progress' %}
+                                bg-purple-100 text-purple-800
+                            {% elif order.status == 'completed' %}
+                                bg-green-100 text-green-800
+                            {% else %}
+                                bg-red-100 text-red-800
+                            {% endif %}">
+                            {{ order.status }}
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        {% if order.status == 'waiting_payment' or order.status == 'finding_worker' %}
+                        <button onclick="cancelOrder('{{ order.id }}')"
+                                class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Batalkan
+                        </button>
+                        {% elif order.status == 'completed' and not order.has_testimonial %}
+                        <button onclick="showTestimonialModal('{{ order.id }}')"
+                                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            Buat Testimoni
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Testimonial Modal -->
+<div id="testimonialModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white rounded-lg max-w-lg mx-auto mt-20 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Buat Testimoni</h2>
+            <button onclick="closeTestimonialModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="testimonialForm" method="POST" action="{{ create_testimonial_url }}">
+            {% csrf_token %}
+            <input type="hidden" id="orderId" name="order_id">
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Rating
+                </label>
+                <div class="flex gap-2">
+                    {% for i in "12345" %}
+                    <button type="button" 
+                            onclick='setRating({{ i }})'
+                            class="text-2xl text-gray-400 hover:text-yellow-500 focus:text-yellow-500">
+                        ★
+                    </button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" id="rating" name="rating" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Testimoni
+                </label>
+                <textarea name="testimonial" required
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          rows="4"></textarea>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" 
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Kirim Testimoni
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Testimonial Modal Functions
+function showTestimonialModal(orderId) {
+    document.getElementById('orderId').value = orderId;
+    document.getElementById('testimonialModal').classList.remove('hidden');
+}
+
+function closeTestimonialModal() {
+    document.getElementById('testimonialModal').classList.add('hidden');
+}
+
+function setRating(rating) {
+    document.getElementById('rating').value = rating;
+    const stars = document.querySelectorAll('#testimonialForm button');
+    stars.forEach((star, index) => {
+        star.classList.toggle('text-yellow-500', index < rating);
+        star.classList.toggle('text-gray-400', index >= rating);
+    });
+}
+
+async function cancelOrder(orderId) {
+    if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/batalkan-pesanan/${orderId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Gagal membatalkan pesanan: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error canceling order:', error);
+    }
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const testimonialModal = document.getElementById('testimonialModal');
+    if (event.target === testimonialModal) {
+        closeTestimonialModal();
+    }
+}
+</script>
+{% endblock %}
