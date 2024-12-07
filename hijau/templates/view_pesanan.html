@@ -1,9 +1,14 @@
+<!-- hijau/templates/hijau/view_pemesanan.html -->
 {% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Daftar Pesanan - SIJARTA{% endblock %}
 
 {% block content %}
+<!-- Definisikan URL sebagai variabel -->
+{% url 'cancel_order' 'ORDER_ID_PLACEHOLDER' as cancel_order_url %}
+{% url 'create_testimonial' as create_testimonial_url %}
+
 <section class="container mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-lg p-6">
         <div class="flex justify-between items-center mb-6">
@@ -11,14 +16,16 @@
             
             <!-- Filter and Search -->
             <div class="flex gap-4">
-                <select class="border rounded-lg px-4 py-2">
+                <select class="border rounded-lg px-4 py-2" id="filter-subcategory">
                     <option value="">Subkategori</option>
                     {% for category in categories %}
-                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% for sub in category.subcategories %}
+                    <option value="{{ sub.id }}">{{ sub.nama_subkategori }}</option>
+                    {% endfor %}
                     {% endfor %}
                 </select>
                 
-                <select class="border rounded-lg px-4 py-2">
+                <select class="border rounded-lg px-4 py-2" id="filter-status">
                     <option value="">Status Pesanan</option>
                     <option value="waiting_payment">Menunggu Pembayaran</option>
                     <option value="finding_worker">Mencari Pekerja Terdekat</option>
@@ -29,22 +36,22 @@
 
                 <input type="text" 
                        placeholder="Search..." 
-                       class="border rounded-lg px-4 py-2">
+                       class="border rounded-lg px-4 py-2" id="search-query">
             </div>
         </div>
 
         <!-- Orders List -->
-        <div class="space-y-4">
+        <div class="space-y-4" id="orders-list">
             {% for order in orders %}
             <div class="border rounded-lg p-4">
                 <div class="grid grid-cols-5 gap-4">
                     <div>
-                        <div class="font-semibold">{{ order.subcategory.name }}</div>
-                        <div class="text-sm text-gray-600">{{ order.service_session.name }}</div>
+                        <div class="font-semibold">{{ order.nama_subkategori }}</div>
+                        <div class="text-sm text-gray-600">{{ order.service_session_name }}</div>
                     </div>
                     <div>
-                        <div class="font-semibold">Rp {{ order.total_payment }}</div>
-                        <div class="text-sm text-gray-600">{{ order.worker.name|default:"Belum ada pekerja" }}</div>
+                        <div class="font-semibold">Rp {{ order.total_payment|floatformat:0 }}</div>
+                        <div class="text-sm text-gray-600">{{ order.worker_name|default:"Belum ada pekerja" }}</div>
                     </div>
                     <div class="text-center">
                         <span class="px-3 py-1 rounded-full text-sm
@@ -59,7 +66,7 @@
                             {% else %}
                                 bg-red-100 text-red-800
                             {% endif %}">
-                            {{ order.get_status_display }}
+                            {{ order.status }}
                         </span>
                     </div>
                     <div class="text-right">
@@ -91,7 +98,7 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="testimonialForm" method="POST" action="{% url 'create_testimonial' %}">
+        <form id="testimonialForm" method="POST" action="{{ create_testimonial_url }}">
             {% csrf_token %}
             <input type="hidden" id="orderId" name="order_id">
             
@@ -102,7 +109,7 @@
                 <div class="flex gap-2">
                     {% for i in "12345" %}
                     <button type="button" 
-                            onclick="setRating({{ i }})"
+                            onclick='setRating({{ i }})'
                             class="text-2xl text-gray-400 hover:text-yellow-500 focus:text-yellow-500">
                         ★
                     </button>
@@ -131,41 +138,6 @@
 </div>
 
 <script>
-// Order Modal Functions
-function showOrderModal(sessionId) {
-    document.getElementById('sessionId').value = sessionId;
-    document.getElementById('orderModal').classList.remove('hidden');
-    calculateTotal();
-}
-
-function closeOrderModal() {
-    document.getElementById('orderModal').classList.add('hidden');
-}
-
-async function calculateTotal() {
-    const sessionId = document.getElementById('sessionId').value;
-    const discountCode = document.getElementById('discount_code').value;
-    
-    try {
-        const response = await fetch(`/api/calculate-total/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify({
-                session_id: sessionId,
-                discount_code: discountCode
-            })
-        });
-        
-        const data = await response.json();
-        document.getElementById('total_payment').value = `Rp ${data.total}`;
-    } catch (error) {
-        console.error('Error calculating total:', error);
-    }
-}
-
 // Testimonial Modal Functions
 function showTestimonialModal(orderId) {
     document.getElementById('orderId').value = orderId;
@@ -189,17 +161,20 @@ async function cancelOrder(orderId) {
     if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
         return;
     }
-    
+
     try {
-        const response = await fetch(`/api/cancel-order/${orderId}/`, {
+        const response = await fetch(`/api/batalkan-pesanan/${orderId}/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         });
-        
-        if (response.ok) {
+
+        const data = await response.json();
+        if (data.success) {
             window.location.reload();
+        } else {
+            alert('Gagal membatalkan pesanan: ' + data.error);
         }
     } catch (error) {
         console.error('Error canceling order:', error);
@@ -208,12 +183,8 @@ async function cancelOrder(orderId) {
 
 // Close modals when clicking outside
 window.onclick = function(event) {
-    const orderModal = document.getElementById('orderModal');
     const testimonialModal = document.getElementById('testimonialModal');
-    
-    if (event.target === orderModal) {
-        closeOrderModal();
-    } else if (event.target === testimonialModal) {
+    if (event.target === testimonialModal) {
         closeTestimonialModal();
     }
 }
