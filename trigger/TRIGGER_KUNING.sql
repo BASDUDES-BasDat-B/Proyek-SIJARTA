@@ -40,7 +40,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
--- trigger check_worker_bank
+-- trigger untuk check_worker_bank
 CREATE TRIGGER check_worker_bank
 BEFORE INSERT OR UPDATE ON PEKERJA
 FOR EACH ROW
