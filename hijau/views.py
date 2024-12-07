@@ -165,10 +165,10 @@ def cancel_order(request, order_id):
             user_id = request.session.get('user_id')
             if not user_id:
                 return JsonResponse({'success': False, 'error': 'User not authenticated.'})
-            
+
             # Memastikan order_id valid dan terkait dengan pengguna
             query_order = """
-                SELECT id_pekerja, status_id
+                SELECT status_id
                 FROM TR_PEMESANAN_JASA
                 WHERE id = %s AND id_pelanggan = %s
                 LIMIT 1;
@@ -177,34 +177,46 @@ def cancel_order(request, order_id):
             order = cursor.fetchone()
             if not order:
                 return JsonResponse({'success': False, 'error': 'Pesanan tidak ditemukan.'})
-            
-            # Cek apakah status pesanan memungkinkan untuk dibatalkan
-            status_id = order[1]
-            # Asumsikan status_id '1' adalah 'waiting_payment' dan '2' adalah 'finding_worker'
-            if status_id not in [1, 2]:
-                return JsonResponse({'success': False, 'error': 'Pesanan tidak dapat dibatalkan pada status ini.'})
-            
-            # Mengupdate status pesanan menjadi 'cancelled' (asumsikan status_id '6' adalah 'cancelled')
-            update_query = """
-                UPDATE TR_PEMESANAN_JASA
-                SET status_id = %s
-                WHERE id = %s;
+
+            current_status_id = order[0]
+
+            # Mendapatkan id_status untuk 'Mencari Pekerja Terdekat' dan 'Dibatalkan'
+            cursor.execute("SELECT id FROM STATUS_PEMESANAN WHERE status = 'Mencari Pekerja Terdekat'")
+            searching_worker_status = cursor.fetchone()
+            if not searching_worker_status:
+                return JsonResponse({'success': False, 'error': 'Status "Mencari Pekerja Terdekat" tidak ditemukan.'})
+            searching_worker_status_id = searching_worker_status[0]
+
+            cursor.execute("SELECT id FROM STATUS_PEMESANAN WHERE status = 'Dibatalkan'")
+            cancelled_status = cursor.fetchone()
+            if not cancelled_status:
+                return JsonResponse({'success': False, 'error': 'Status "Dibatalkan" tidak ditemukan.'})
+            cancelled_status_id = cancelled_status[0]
+
+            # Cek apakah pesanan dalam status "Mencari Pekerja Terdekat"
+            if current_status_id != searching_worker_status_id:
+                return JsonResponse({'success': False, 'error': 'Pesanan tidak dapat dibatalkan karena tidak dalam status "Mencari Pekerja Terdekat".'})
+
+            # Insert ke TR_PEMESANAN_STATUS dengan status 'Dibatalkan'
+            insert_status = """
+                INSERT INTO TR_PEMESANAN_STATUS (id_tr_pemesanan, id_status, tgl_waktu)
+                VALUES (%s, %s, CURRENT_TIMESTAMP);
             """
-            cancelled_status_id = 6  # Ganti dengan ID status 'cancelled' yang sesuai
-            cursor.execute(update_query, (cancelled_status_id, order_id))
+            cursor.execute(insert_status, (order_id, cancelled_status_id))
             conn.commit()
-            
+
             return JsonResponse({'success': True})
-        
+
         except Exception as e:
             conn.rollback()
             return JsonResponse({'success': False, 'error': str(e)})
-        
+
         finally:
             cursor.close()
             conn.close()
     else:
         return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
 
 @csrf_exempt
 @login_required
