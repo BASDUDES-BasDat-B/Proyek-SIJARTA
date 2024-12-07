@@ -1,7 +1,21 @@
 {% extends 'base.html' %}
-{% block title %}Login{% endblock %}
+{% block title %}SIJARTA - Login{% endblock %}
 {% block content %}
-<div class="flex items-center justify-center h-[calc(100vh-6rem)]">
+
+{% if messages %}
+<div class="fixed top-4 right-4 z-50">
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div id="alert-{{ forloop.counter }}" class="flex items-center justify-between bg-red-500 text-white px-4 py-3 rounded shadow-lg transition-opacity duration-500 animate-slide-in">
+                <span>{{ message }}</span>
+                <button onclick="closeAlert('alert-{{ forloop.counter }}')" class="text-white font-bold">&times;</button>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="flex items-center justify-center h-[calc(100vh-6rem)]"> 
     <div class="w-full max-w-sm p-6 rounded-lg shadow-md">
         <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Form Login</h1>
         <form method="post" class="space-y-4" action="{% url 'login' %}">
@@ -35,4 +49,15 @@
         </form>
     </div>
 </div>
+<script>
+    function closeAlert(alertId) {
+        const alertElement = document.getElementById(alertId);
+        if (alertElement) {
+            alertElement.style.opacity = '0';
+            setTimeout(() => {
+                alertElement.remove();
+            }, 500); 
+        }
+    }
+</script>
 {% endblock %}
