@@ -6,12 +6,12 @@
         <div class="flex items-center space-x-4">
             {% if request.session.user %}
                 <div class="text-gray-700 font-medium">
-                    {{ request.session.user.nama }} ({{ request.session.user.role }})
+                    {{ request.session.user.Nama }} | ({{ request.session.user.role }})
                 </div>
             {% endif %}
             <ul class="hidden md:flex space-x-4 items-center">
                 {% if request.session.user %}
-                    {% if request.session.user.role == 'pengguna' %}
+                    {% if request.session.user.role == 'pelanggan' or request.session.user.role == 'pengguna'%}
                         <li><a href="{% url 'homepage' %}" class="text-gray-700 hover:text-gray-900">Homepage</a></li>
                         <li><a href="{% url 'transaksi_list' %}" class="text-gray-700 hover:text-gray-900">MyPay</a></li>
                         <li><a href="{% url 'view_pesanan' %}" class="text-gray-700 hover:text-gray-900">Kelola Pesanan Saya</a></li>
@@ -42,7 +42,7 @@
 
     <div id="mobile-menu" class="bg-white shadow-md py-2 px-4 md:hidden hidden">
         {% if request.session.user %}
-            {% if request.session.user.role == 'pengguna' %}
+            {% if request.session.user.role == 'pelanggan' or request.session.user.role == 'pengguna' %}
                 <a href="{% url 'homepage' %}" class="block text-gray-700 hover:text-gray-900 py-2">Homepage</a>
                 <a href="{% url 'transaksi_list' %}" class="block text-gray-700 hover:text-gray-900 py-2">MyPay</a>
                 <a href="{% url 'view_pesanan' %}" class="block text-gray-700 hover:text-gray-900 py-2">Kelola Pesanan Saya</a>
