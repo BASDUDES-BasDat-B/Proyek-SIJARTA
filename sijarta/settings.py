@@ -10,27 +10,37 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 from urllib.parse import urlparse
-from decouple import config
-import os
-from os import getenv
 from dotenv import load_dotenv
 
-## Build paths inside the project like this: BASE_DIR / 'subdir'.
+# ===========================
+# Load Environment Variables
+# ===========================
+
+# Path ke direktori base proyek
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Muat variabel lingkungan dari file .env
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+# ===========================
+# Security Settings
+# ===========================
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rt*=d6kj_r$ya18k@!b&a)51)102mk%vajnhgl%hb0s#a+b_lh'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 't']
+
+# ALLOWED_HOSTS
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".vercel.app"]
-# Application definition
+
+# ===========================
+# Application Definition
+# ===========================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -39,14 +49,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'hijau',
-    'kuning',
-    'Blue',
-    'merah'
+    # Tambahkan aplikasi Anda di sini
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Whitenoise middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -60,7 +68,7 @@ ROOT_URLCONF = 'sijarta.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Direktori template
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -75,27 +83,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sijarta.wsgi.application'
 
+# ===========================
+# Database Configuration
+# ===========================
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-# Replace the DATABASES section of your settings.py with this
 tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.replace('/', ''),
+        'NAME': tmpPostgres.path.lstrip('/'),
         'USER': tmpPostgres.username,
         'PASSWORD': tmpPostgres.password,
         'HOST': tmpPostgres.hostname,
-        'PORT': 5432,
+        'PORT': tmpPostgres.port or 5432,
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+# ===========================
+# Password Validation
+# ===========================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -112,11 +122,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+# ===========================
 # Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
+# ===========================
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-us'  # Ubah sesuai kebutuhan
 
 TIME_ZONE = 'UTC'
 
@@ -124,24 +134,19 @@ USE_I18N = True
 
 USE_TZ = True
 
+# ===========================
+# Static Files Configuration
+# ===========================
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+# Whitenoise configuration untuk mengelola static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+# ===========================
+# Default Primary Key Field Type
+# ===========================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-DATABASE_CONFIG = {
-    'dbname': config('DB_NAME'),
-    'user': config('DB_USER'),
-    'password': config('DB_PASSWORD'),
-    'host': config('DB_HOST', default='localhost'),
-    'port': config('DB_PORT', cast=int, default=5432),
-}
-
