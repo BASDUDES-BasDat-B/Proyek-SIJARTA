@@ -44,12 +44,12 @@
 
         <!-- Tombol Status -->
         <div class="flex justify-center gap-4 mt-4">
-            {% if pesanan.status == "Menunggu Pekerja Berangkat" %}
-            <a href="#" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Tiba Di Lokasi</a>
-            {% elif pesanan.status == "Pekerja Tiba Di Lokasi" %}
-            <a href="#" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Melakukan Pelayanan Jasa</a>
-            {% elif pesanan.status == "Pelayanan Jasa Sedang Dilakukan" %}
-            <a href="#" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Selesai</a>
+            {% if pesanan.status == "Mencari Pekerja Terdekat" %}
+                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pekerja Menuju Lokasi' %}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Tiba Di Lokasi</a>
+            {% elif pesanan.status == "Pekerja Menuju Lokasi" %}
+                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pekerja Mulai Pekerjaan' %}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Melakukan Pelayanan Jasa</a>
+            {% elif pesanan.status == "Pekerja Mulai Pekerjaan" %}
+                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pemesanan Selesai' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Selesai</a>
             {% endif %}
         </div>
     </div>

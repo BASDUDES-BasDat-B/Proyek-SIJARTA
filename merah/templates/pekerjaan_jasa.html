@@ -17,8 +17,8 @@
     <select name="kategori" id="kategori" class="p-2 border rounded w-full mb-4" onchange="this.form.submit()">
         <option value="">-- Pilih Kategori --</option>
         {% for kategori in kategori_list %}
-            <option value="{{ kategori.id }}" {% if kategori.id == selected_kategori %}selected{% endif %}>
-                {{ kategori.nama }}
+            <option value="{{ kategori.0 }}" {% if kategori.0|stringformat:"s" == selected_kategori %}selected{% endif %}>
+                {{ kategori.1 }}
             </option>
         {% endfor %}
     </select>
@@ -27,8 +27,8 @@
     <select name="subkategori" id="subkategori" class="p-2 border rounded w-full mb-4" onchange="this.form.submit()">
         <option value="">-- Pilih Subkategori --</option>
         {% for subkategori in subkategori_list %}
-            <option value="{{ subkategori.id }}" {% if subkategori.id == selected_subkategori %}selected{% endif %}>
-                {{ subkategori.nama }}
+            <option value="{{ subkategori.0 }}" {% if subkategori.0|stringformat:"s" == selected_subkategori %}selected{% endif %}>
+                {{ subkategori.1 }}
             </option>
         {% endfor %}
     </select>
@@ -38,13 +38,18 @@
 <div class="max-w-3xl mx-auto">
     {% for pesanan in pesanan_list %}
     <div class="border rounded p-4 mb-6 shadow-md">
-        <p><strong>Nama Subkategori:</strong> {{ pesanan.subkategori }}</p>
-        <p><strong>Nama Pelanggan:</strong> {{ pesanan.nama_pelanggan }}</p>
-        <p><strong>Tanggal Pemesanan:</strong> {{ pesanan.tanggal_pemesanan }}</p>
-        <p><strong>Tanggal Pekerjaan:</strong> {{ pesanan.tanggal_pekerjaan }}</p>
-        <p><strong>Total Biaya:</strong> Rp {{ pesanan.total_biaya }}</p>
+        <p><strong>Nama Subkategori:</strong> {{ pesanan.1 }}</p>
+        <p><strong>Nama Pelanggan:</strong> {{ pesanan.2 }}</p>
+        <p><strong>Tanggal Pemesanan:</strong> {{ pesanan.3 }}</p>
+        <p><strong>Sesi:</strong> {{ pesanan.4 }}</p>
+        <p><strong>Total Biaya:</strong> Rp {{ pesanan.5 }}</p>
         <div class="flex justify-center mt-4">
-            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Kerjakan Pesanan</button>
+            <form method="post" action="{% url 'kerjakan_pesanan' pesanan.0 %}">
+                {% csrf_token %}
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Kerjakan Pesanan
+                </button>
+            </form>
         </div>
     </div>
     {% empty %}
