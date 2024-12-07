@@ -40,6 +40,11 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE TRIGGER check_worker_bank
+BEFORE INSERT OR UPDATE ON PEKERJA
+FOR EACH ROW
+EXECUTE FUNCTION check_worker_bank();
+
 -- Membuat trigger untuk cek NPWP
 CREATE OR REPLACE FUNCTION check_worker_npwp() 
 RETURNS TRIGGER AS
