@@ -2,18 +2,12 @@
     "version": 2,
     "builds": [
       {
-        "src": "sijarta/wsgi.py",
+        "src": "index.py",
         "use": "@vercel/python",
         "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
-      },
-      {
-        "src": "build_files.sh",
-        "use": "@vercel/static-build",
-        "config": {
-          "distDir": "staticfiles"
-        }
       }
     ],
+    "buildCommand": "pip install -r requirements.txt && python manage.py collectstatic --noinput",
     "routes": [
       {
         "src": "/static/(.*)",
@@ -21,7 +15,7 @@
       },
       {
         "src": "/(.*)",
-        "dest": "sijarta/wsgi.py"
+        "dest": "index.py"
       }
     ]
   }
