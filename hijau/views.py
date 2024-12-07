@@ -421,4 +421,183 @@ def create_order(request):
             conn.close()
     else:
         return redirect('homepage')
+    
+@login_required
+def subcategory_jasa(request, category_slug, subcategory_slug):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        # Mengambil informasi kategori dan subkategori
+        query = """
+            SELECT 
+                kj.id AS kategori_id,
+                kj.nama_kategori,
+                skj.id AS subkategori_id,
+                skj.nama_subkategori,
+                skj.deskripsi
+            FROM 
+                KATEGORI_JASA kj
+            JOIN 
+                SUBKATEGORI_JASA skj ON kj.id = skj.kategori_jasa_id
+            WHERE 
+                kj.slug = %s AND skj.slug = %s;
+        """
+        cursor.execute(query, (category_slug, subcategory_slug))
+        subcategory = cursor.fetchone()
+        
+        if not subcategory:
+            return HttpResponse("Subkategori tidak ditemukan.", status=404)
+        
+        # Mengambil layanan terkait subkategori
+        query_services = """
+            SELECT 
+                layanan.id,
+                layanan.nama_layanan,
+                layanan.deskripsi,
+                layanan.harga
+            FROM 
+                LAYANAN layanan
+            WHERE 
+                layanan.subkategori_jasa_id = %s;
+        """
+        cursor.execute(query_services, (subcategory['subkategori_id'],))
+        services = cursor.fetchall()
+        
+        context = {
+            'kategori': {
+                'id': subcategory['kategori_id'],
+                'nama': subcategory['nama_kategori'],
+                'slug': category_slug,
+            },
+            'subkategori': {
+                'id': subcategory['subkategori_id'],
+                'nama': subcategory['nama_subkategori'],
+                'deskripsi': subcategory['deskripsi'],
+                'slug': subcategory_slug,
+            },
+            'services': services,
+        }
+        
+        return render(request, 'hijau/subcategory_jasa.html', context)
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return HttpResponse("Terjadi kesalahan saat memuat subkategori.", status=500)
+    
+    finally:
+        if not cursor.closed:
+            cursor.close()
+        if not conn.closed:
+            conn.close()
 
+@csrf_exempt
+@login_required
+def calculate_total(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            session_id = data.get('session_id')
+            discount_code = data.get('discount_code', '').strip()
+            
+            if not session_id:
+                return JsonResponse({'error': 'Session ID diperlukan.'}, status=400)
+            
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            # Mendapatkan harga dari sesi layanan
+            query_harga = """
+                SELECT harga
+                FROM SESI_LAYANAN
+                WHERE sesi = %s
+                LIMIT 1;
+            """
+            cursor.execute(query_harga, (session_id,))
+            sesi = cursor.fetchone()
+            if not sesi:
+                return JsonResponse({'error': 'Sesi layanan tidak ditemukan.'}, status=404)
+            harga = sesi[0]
+            
+            total = harga
+            
+            # Menghitung diskon jika ada
+            if discount_code:
+                query_diskon = """
+                    SELECT potongan, min_tr_pemesanan
+                    FROM DISKON
+                    WHERE kode = %s
+                    LIMIT 1;
+                """
+                cursor.execute(query_diskon, (discount_code,))
+                diskon = cursor.fetchone()
+                if not diskon:
+                    return JsonResponse({'error': 'Kode diskon tidak valid.'}, status=400)
+                potongan, min_tr_pemesanan = diskon
+                total -= (harga * potongan)
+                if total < 0:
+                    total = 0
+            
+            return JsonResponse({'total': total})
+        
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+        
+        finally:
+            cursor.close()
+            conn.close()
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+    
+@csrf_exempt
+@login_required
+def join_service(request, subcategory_slug):
+    if request.method == 'POST':
+        try:
+            user_id = request.session.get('user_id')
+            if not user_id:
+                return JsonResponse({'error': 'User not authenticated.'}, status=401)
+            
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            # Mendapatkan subkategori_jasa_id berdasarkan slug
+            query_subkategori = """
+                SELECT id
+                FROM SUBKATEGORI_JASA
+                WHERE slug = %s
+                LIMIT 1;
+            """
+            cursor.execute(query_subkategori, (subcategory_slug,))
+            subkategori = cursor.fetchone()
+            if not subkategori:
+                return JsonResponse({'error': 'Subkategori tidak ditemukan.'}, status=404)
+            subkategori_id = subkategori[0]
+            
+            # Mendapatkan pekerja yang terhubung dengan subkategori
+            query_pekerja = """
+                SELECT p.id
+                FROM PEKERJA p
+                JOIN PEKERJA_KATEGORI_JASA pkj ON p.id = pkj.pekerja_id
+                WHERE pkj.kategori_jasa_id = %s
+                ORDER BY p.rating DESC
+                LIMIT 1;
+            """
+            cursor.execute(query_pekerja, (subkategori_id,))
+            pekerja = cursor.fetchone()
+            if not pekerja:
+                return JsonResponse({'error': 'Tidak ada pekerja yang tersedia untuk subkategori ini.'}, status=404)
+            pekerja_id = pekerja[0]
+            
+            # Logika tambahan untuk bergabung dengan layanan bisa ditambahkan di sini
+            
+            return JsonResponse({'success': 'Berhasil bergabung dengan layanan.'})
+        
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+        
+        finally:
+            cursor.close()
+            conn.close()
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)

@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% block title %}SIJARTA - REGISTRATION{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center h-[calc(100vh-6rem)]">
+    <div class="w-full max-w-md bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
+        <h1 class="text-xl font-bold text-center text-gray-800 mb-4">SIJARTA - Register</h1>
+        
+        {% if messages %}
+        <div class="fixed top-4 right-4 z-50 space-y-2">
+            {% for message in messages %}
+                <div 
+                    id="alert-{{ forloop.counter }}" 
+                    class="flex items-center justify-between 
+                    {% if message.tags == 'error' %} bg-red-500 {% elif message.tags == 'success' %} bg-green-500 {% endif %} 
+                    text-white px-4 py-3 rounded shadow-lg transition-opacity duration-500"
+                >
+                    <span>{{ message }}</span>
+                    <button onclick="closeAlert('alert-{{ forloop.counter }}')" class="text-white font-bold">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'register' %}" id="registerForm" class="space-y-6">
+            {% csrf_token %}
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700">Role:</label>
+                <select 
+                    id="role" 
+                    name="role" 
+                    onchange="showFormFields()" 
+                    class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                    <option value="">-- Pilih Role --</option>
+                    <option value="pengguna">Pengguna</option>
+                    <option value="pekerja">Pekerja</option>
+                </select>
+            </div>
+
+            <div id="penggunaFields" class="space-y-4" style="display: none;">
+                <h2 class="text-lg font-semibold text-gray-700">Form Pengguna</h2>
+                <div>
+                    <label for="pengguna_name" class="block text-sm font-medium text-gray-700">Nama:</label>
+                    <input 
+                        type="text" 
+                        id="pengguna_name" 
+                        name="pengguna_name" 
+                        data-role="pengguna"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+                <div>
+                    <label for="pengguna_password" class="block text-sm font-medium text-gray-700">Password:</label>
+                    <input 
+                        type="password" 
+                        id="pengguna_password" 
+                        name="pengguna_password" 
+                        data-role="pengguna"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Jenis Kelamin:</label>
+                    <div class="flex items-center space-x-4">
+                        <label>
+                            <input 
+                                type="radio" 
+                                name="pengguna_gender" 
+                                value="L" 
+                                class="mr-2 focus:ring-blue-500"
+                            >
+                            L
+                        </label>
+                        <label>
+                            <input 
+                                type="radio" 
+                                name="pengguna_gender" 
+                                value="P" 
+                                class="mr-2 focus:ring-blue-500"
+                            >
+                            P
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label for="pengguna_phone" class="block text-sm font-medium text-gray-700">No HP:</label>
+                    <input 
+                        type="number" 
+                        id="pengguna_phone" 
+                        name="pengguna_phone" 
+                        data-role="pengguna"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+                <div>
+                    <label for="pengguna_birthdate" class="block text-sm font-medium text-gray-700">Tanggal Lahir:</label>
+                    <input 
+                        type="date" 
+                        id="pengguna_birthdate" 
+                        name="pengguna_birthdate" 
+                        data-role="pengguna"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+                <div>
+                    <label for="pengguna_address" class="block text-sm font-medium text-gray-700">Alamat:</label>
+                    <textarea 
+                        id="pengguna_address" 
+                        name="pengguna_address" 
+                        rows="3" 
+                        data-role="pengguna"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div id="pekerjaFields" class="space-y-4" style="display: none;">
+                <h2 class="text-lg font-semibold text-gray-700">Form Pekerja</h2>
+                
+                <div>
+                    <label for="pekerja_name" class="block text-sm font-medium text-gray-700">Nama:</label>
+                    <input 
+                        type="text" 
+                        id="pekerja_name" 
+                        name="pekerja_name" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+
+                <div>
+                    <label for="pekerja_password" class="block text-sm font-medium text-gray-700">Password:</label>
+                    <input 
+                        type="password" 
+                        id="pekerja_password" 
+                        name="pekerja_password" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+
+                <div>
+                    <label for="pekerja_gender" class="block text-sm font-medium text-gray-700">Jenis Kelamin:</label>
+                    <div class="flex items-center space-x-4">
+                        <label>
+                            <input 
+                                type="radio" 
+                                name="pekerja_gender" 
+                                value="L" 
+                                class="mr-2 focus:ring-blue-500"
+                            >
+                            L
+                        </label>
+                        <label>
+                            <input 
+                                type="radio" 
+                                name="pekerja_gender" 
+                                value="P" 
+                                class="mr-2 focus:ring-blue-500"
+                            >
+                            P
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="pekerja_phone" class="block text-sm font-medium text-gray-700">No HP:</label>
+                    <input 
+                        type="number" 
+                        id="pekerja_phone" 
+                        name="pekerja_phone" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+
+                <div>
+                    <label for="pekerja_birthdate" class="block text-sm font-medium text-gray-700">Tanggal Lahir:</label>
+                    <input 
+                        type="date" 
+                        id="pekerja_birthdate" 
+                        name="pekerja_birthdate" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+
+                <div>
+                    <label for="pekerja_address" class="block text-sm font-medium text-gray-700">Alamat:</label>
+                    <textarea 
+                        id="pekerja_address" 
+                        name="pekerja_address" 
+                        rows="3" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label for="pekerja_bank" class="block text-sm font-medium text-gray-700">Nama Bank:</label>
+                    <select 
+                        id="pekerja_bank" 
+                        name="pekerja_bank" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="" disabled selected>-- Pilih Bank --</option>
+                        <option value="GoPay">GoPay</option>
+                        <option value="OVO">OVO</option>
+                        <option value="BCA">Virtual Account BCA</option>
+                        <option value="BNI">Virtual Account BNI</option>
+                        <option value="Mandiri">Virtual Account Mandiri</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="pekerja_account_number" class="block text-sm font-medium text-gray-700">Nomor Rekening:</label>
+                    <input 
+                        type="number" 
+                        id="pekerja_account_number" 
+                        name="pekerja_account_number" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+
+                <div>
+                    <label for="pekerja_photo_link" class="block text-sm font-medium text-gray-700">URL Foto:</label>
+                    <input 
+                        type="url" 
+                        id="pekerja_photo_link" 
+                        name="pekerja_photo_link" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+
+                <div>
+                    <label for="pekerja_npwp" class="block text-sm font-medium text-gray-700">NPWP:</label>
+                    <input 
+                        type="number" 
+                        id="pekerja_npwp" 
+                        name="pekerja_npwp" 
+                        data-role="pekerja"
+                        class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                </div>
+            </div>
+
+            <button 
+                type="submit" 
+                id="submitButton" 
+                style="display: none;" 
+                class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+            >
+                Register
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function closeAlert(alertId) {
+        const alertElement = document.getElementById(alertId);
+        if (alertElement) {
+            alertElement.style.opacity = '0';
+            setTimeout(() => {
+                alertElement.remove();
+            }, 500); // Sesuai dengan durasi transition-opacity
+        }
+    }
+
+    function showFormFields() {
+        const role = document.getElementById('role').value;
+        const penggunaFields = document.getElementById('penggunaFields');
+        const pekerjaFields = document.getElementById('pekerjaFields');
+        const submitButton = document.getElementById('submitButton');
+
+        if (role === 'pengguna') {
+            penggunaFields.style.display = 'block';
+            pekerjaFields.style.display = 'none';
+            submitButton.style.display = 'block';
+            setFieldsRequired(penggunaFields, true);
+            setFieldsRequired(pekerjaFields, false);
+        } else if (role === 'pekerja') {
+            penggunaFields.style.display = 'none';
+            pekerjaFields.style.display = 'block';
+            submitButton.style.display = 'block';
+            setFieldsRequired(pekerjaFields, true);
+            setFieldsRequired(penggunaFields, false);
+        } else {
+            penggunaFields.style.display = 'none';
+            pekerjaFields.style.display = 'none';
+            submitButton.style.display = 'none';
+            setFieldsRequired(penggunaFields, false);
+            setFieldsRequired(pekerjaFields, false);
+        }
+    }
+
+    function setFieldsRequired(container, isRequired) {
+        const inputs = container.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (isRequired) {
+                input.removeAttribute('disabled');
+                if (!input.hasAttribute('data-optional')) {
+                    input.setAttribute('required', 'required');
+                }
+            } else {
+                input.setAttribute('disabled', 'disabled');
+                input.removeAttribute('required');
+            }
+        });
+    }
+    document.addEventListener('DOMContentLoaded', showFormFields);
+</script>
+{% endblock %}
+    
