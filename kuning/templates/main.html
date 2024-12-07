@@ -1,5 +1,19 @@
 {% extends 'base.html' %}
 {% block content %}
+
+{% if messages %}
+<div class="fixed top-4 right-4 z-50 space-y-2">
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <div id="alert-{{ forloop.counter }}" class="flex items-center justify-between bg-green-500 text-white px-4 py-3 rounded shadow-lg transition-opacity duration-500">
+                <span>{{ message }}</span>
+                <button onclick="closeAlert('alert-{{ forloop.counter }}')" class="text-white font-bold">&times;</button>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="flex items-center justify-center h-[calc(100vh-6rem)]">
     <div class="container max-w-md p-6 text-center">
         <h1 class="text-3xl font-bold text-gray-800 mb-6">SIJARTA By BASDUDES</h1>
@@ -17,4 +31,24 @@
         </div>
     </div>
 </div>
+<script>
+    function closeAlert(alertId) {
+        const alertElement = document.getElementById(alertId);
+        if (alertElement) {
+            alertElement.style.opacity = '0';
+            setTimeout(() => {
+                alertElement.remove();
+            }, 500); 
+        }
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+        const alerts = document.querySelectorAll("[id^='alert-']");
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                closeAlert(alert.id);
+            }, 5000); 
+        });
+    });
+</script>
 {% endblock %}
