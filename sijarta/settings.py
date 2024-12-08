@@ -10,24 +10,38 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
-from decouple import config
 import os
+from pathlib import Path
+from urllib.parse import urlparse
+from dotenv import load_dotenv
+import dj_database_url
 
-## Build paths inside the project like this: BASE_DIR / 'subdir'.
+# ===========================
+# Load Environment Variables
+# ===========================
+
+# Path ke direktori base proyek
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Muat variabel lingkungan dari file .env
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+# ===========================
+# Security Settings
+# ===========================
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rt*=d6kj_r$ya18k@!b&a)51)102mk%vajnhgl%hb0s#a+b_lh'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-# Application definition
+DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 't']
+
+# ALLOWED_HOSTS
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".vercel.app"]
+
+# ===========================
+# Application Definition
+# ===========================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,14 +50,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'hijau',
-    'kuning',
-    'Blue',
-    'merah'
+    # Tambahkan aplikasi Anda di sini
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Whitenoise middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -57,7 +69,7 @@ ROOT_URLCONF = 'sijarta.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Direktori template
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -72,20 +84,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sijarta.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+# ===========================
+# Database Configuration
+# ===========================
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+# ===========================
+# Password Validation
+# ===========================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -102,11 +115,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+# ===========================
 # Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
+# ===========================
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-us'  # Ubah sesuai kebutuhan
 
 TIME_ZONE = 'UTC'
 
@@ -114,22 +127,19 @@ USE_I18N = True
 
 USE_TZ = True
 
+# ===========================
+# Static Files Configuration
+# ===========================
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-STATIC_URL = 'static/'
+# Whitenoise configuration untuk mengelola static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+# ===========================
+# Default Primary Key Field Type
+# ===========================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-DATABASE_CONFIG = {
-    'dbname': config('DB_NAME'),
-    'user': config('DB_USER'),
-    'password': config('DB_PASSWORD'),
-    'host': config('DB_HOST', default='localhost'),
-    'port': config('DB_PORT', cast=int, default=5432),
-}
-

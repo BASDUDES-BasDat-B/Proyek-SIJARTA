@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Transaksi MyPay{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+  <!-- Menampilkan Pesan -->
+  {% if messages %}
+    <div class="mb-4">
+      {% for message in messages %}
+        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Header Form -->
+  <div class="bg-gray-100 p-4 rounded-lg shadow-md mb-4">
+    <div class="text-xl font-semibold mb-2">Transaksi MyPay</div>
+    <p class="text-gray-600">Gunakan form ini untuk melakukan transaksi MyPay. Pilih kategori transaksi untuk menampilkan form yang sesuai.</p>
+  </div>
+
+  <!-- Menampilkan Pesan Error jika ada -->
+  {% if error %}
+    <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
+      {{ error }}
+    </div>
+  {% endif %}
+
+  <!-- Dropdown Kategori Transaksi -->
+  <form method="POST">
+    {% csrf_token %}
+    <div class="bg-gray-100 p-4 rounded-lg shadow-md mb-6">
+      <label for="kategori" class="block text-gray-800 mb-2">Kategori Transaksi:</label>
+      <select id="kategori" name="kategori" class="w-full p-2 border rounded-md" onchange="updateForm()">
+        <option value="" disabled selected>-- Pilih Kategori --</option>
+        {% for key, value in categories %}
+          <option value="{{ key }}">{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Form Berdasarkan Kategori -->
+    <div id="form-container">
+      <!-- State 1: TopUp MyPay -->
+      <div id="topup-form" class="hidden bg-gray-100 p-4 rounded-lg shadow-md">
+        <label for="nominal-topup" class="block text-gray-800">Nominal:</label>
+        <input type="number" name="nominal" id="nominal-topup" class="w-full p-2 border rounded-md" placeholder="Masukkan nominal" required>
+        <button type="submit" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">Top Up</button>
+      </div>
+
+      <!-- State 2: Bayar Jasa -->
+      <div id="bayar-jasa-form" class="hidden bg-gray-100 p-4 rounded-lg shadow-md">
+        <label for="jasa" class="block text-gray-800">Pesanan Jasa:</label>
+        <select name="jasa_id" id="jasa" class="w-full p-2 border rounded-md" required>
+          <option value="" disabled selected>-- Pilih Jasa --</option>
+          {% for jasa in jasa_list %}
+            <option value="{{ jasa.id }}">{{ jasa.nama }} - Harga Setelah Diskon: Rp {{ jasa.harga_setelah_diskon }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">Bayar</button>
+      </div>
+
+      <!-- State 3: Transfer MyPay -->
+      <div id="transfer-form" class="hidden bg-gray-100 p-4 rounded-lg shadow-md">
+        <label for="nohp" class="block text-gray-800">No HP Tujuan:</label>
+        <input type="text" name="nohp" id="nohp" class="w-full p-2 border rounded-md" placeholder="Masukkan No HP" required>
+        <label for="nominal-transfer" class="block text-gray-800 mt-4">Nominal:</label>
+        <input type="number" name="nominal-transfer" id="nominal-transfer" class="w-full p-2 border rounded-md" placeholder="Masukkan nominal" required>
+        <button type="submit" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">Transfer</button>
+      </div>
+
+      <!-- State 4: Withdrawal -->
+      <div id="withdrawal-form" class="hidden bg-gray-100 p-4 rounded-lg shadow-md">
+        <label for="bank" class="block text-gray-800">Nama Bank:</label>
+        <select name="bank" id="bank" class="w-full p-2 border rounded-md" required>
+          <option value="" disabled selected>-- Pilih Bank --</option>
+          {% for bank in bank_list %}
+            <option value="{{ bank }}">{{ bank }}</option>
+          {% endfor %}
+        </select>
+        <label for="rekening" class="block text-gray-800 mt-4">No Rekening:</label>
+        <input type="text" name="rekening" id="rekening" class="w-full p-2 border rounded-md" placeholder="Masukkan No Rekening">
+        <label for="nominal-withdraw" class="block text-gray-800 mt-4">Nominal:</label>
+        <input type="number" name="nominal-withdraw" id="nominal-withdraw" class="w-full p-2 border rounded-md" placeholder="Masukkan nominal" required>
+        <button type="submit" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md">Withdraw</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Script untuk Mengatur State -->
+<script>
+  function updateForm() {
+    const kategori = document.getElementById('kategori').value;
+
+    // Hide all forms
+    document.getElementById('topup-form').classList.add('hidden');
+    document.getElementById('bayar-jasa-form').classList.add('hidden');
+    document.getElementById('transfer-form').classList.add('hidden');
+    document.getElementById('withdrawal-form').classList.add('hidden');
+
+    // Show specific form based on kategori
+    if (kategori === "TopUp MyPay") {
+      document.getElementById('topup-form').classList.remove('hidden');
+    } else if (kategori === "Bayar Jasa") {
+      document.getElementById('bayar-jasa-form').classList.remove('hidden');
+    } else if (kategori === "Transfer MyPay") {
+      document.getElementById('transfer-form').classList.remove('hidden');
+    } else if (kategori === "Withdrawal") {
+      document.getElementById('withdrawal-form').classList.remove('hidden');
+    }
+  }
+</script>
+{% endblock %}
