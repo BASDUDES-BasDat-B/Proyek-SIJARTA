@@ -5,6 +5,9 @@ from utils.db_connection import get_db_connection
 from django.contrib.auth.decorators import login_required
 
 def main_view(request):
+    user_data = request.session.get("user")
+    if user_data:
+        return redirect('homepage')
     return render(request, 'main.html')
 
 def format_bank_name(bank_name):
@@ -43,7 +46,6 @@ def login_view(request):
     if request.method == "POST":
         phone = request.POST.get("phone")
         password = request.POST.get("password")
-        
         conn = get_db_connection()
         
         try:
@@ -124,7 +126,6 @@ def login_view(request):
             messages.error(request, f"Error: {str(e)}")
         finally:
             conn.close()
-
     return render(request, 'login.html')
 
 # Fungsi untuk register
@@ -196,7 +197,6 @@ def register_view(request):
         except psycopg2.IntegrityError as e:
             conn.rollback()
             error = e.pgerror.lower()
-
             if 'nomor hp' in error:
                 messages.error(request, f"Error: Nomor HP {phone} sudah terdaftar.")
                 return render(request, 'main.html')

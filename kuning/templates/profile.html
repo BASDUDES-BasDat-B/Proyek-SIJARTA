@@ -30,7 +30,9 @@
                     </div>
                     {% endif %}
                     <p class="text-lg sm:text-xl">Nama: {{ name }}</p>
+                    {% if not worker}
                     <p class="text-lg sm:text-xl">Level: {{ level }}</p>
+                    {% endif %}
                     <p class="text-lg sm:text-xl">Jenis Kelamin: {{ gender }}</p>
                     <p class="text-lg sm:text-xl">Nomor HP: {{ phone }}</p>
                     <p class="text-lg sm:text-xl">Tanggal Lahir: {{ birthdate }}</p>
@@ -82,7 +84,6 @@
                     {% endif %}
                 {% endif %}
             </div>
-
             {% if is_own_profile %}
             <button onclick="toggleUpdateForm()" class="mt-4 mx-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 block">
                 Update
