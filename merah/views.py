@@ -17,9 +17,9 @@ def execute_query(sql_query, params=None):
 
 #@login_required(login_url='/login/')
 def transaksi_list(request):
-    # user_id = request.user.id  # Get the currently logged-in user's ID
+    user_id = request.user.id  # Get the currently logged-in user's ID
 
-    user_id = "f02cceac-7781-4652-9780-cacf74680211"
+    # user_id = "f02cceac-7781-4652-9780-cacf74680211"
     
     # Query to fetch saldo_mypay (balance)
     saldo_query = "SELECT saldomypay FROM \"USER\" WHERE id = %s"
@@ -69,7 +69,7 @@ def execute_transaction(sql_query, params=None):
 
 def transaksi_form(request):
     # Assuming you get the user ID from the logged-in user
-    user_id = "f02cceac-7781-4652-9780-cacf74680211"
+    user_id = request.user.id  # Get the currently logged-in user's ID
     user_type = check_user_type(user_id)
 
     # Mendapatkan daftar pesanan jasa untuk dropdown State 2 jika user adalah pelanggan
@@ -303,7 +303,7 @@ def pekerjaan_jasa(request):
             SELECT 
                 t.id, 
                 s.namasubkategori, 
-                u.name AS nama_pelanggan, 
+                u.nama AS nama_pelanggan, 
                 t.tglpemesanan, 
                 t.sesi, 
                 t.totalbiaya, 
@@ -327,7 +327,7 @@ def pekerjaan_jasa(request):
             SELECT 
                 t.id, 
                 s.namasubkategori, 
-                u.name AS nama_pelanggan, 
+                u.nama AS nama_pelanggan, 
                 t.tglpemesanan, 
                 t.sesi, 
                 t.totalbiaya, 
@@ -352,7 +352,7 @@ def pekerjaan_jasa(request):
 
 def kerjakan_pesanan(request, pesanan_id):
     if request.method == "POST":
-        pekerja_id = "f02cceac-7781-4652-9780-cacf74680211"
+        pekerja_id = request.user.id  
         tgl_pekerjaan = datetime.now().date()
 
         # Ambil sesi untuk pesanan ini
@@ -415,7 +415,7 @@ def get_latest_status(pesanan_id):
 
 
 def status_pekerjaan_jasa(request):
-    user_id = "f02cceac-7781-4652-9780-cacf74680211"  # Ganti dengan request.user.id jika sudah implementasi autentikasi
+    user_id = request.user.id  
     
     # Ambil filter dari GET request
     nama_jasa = request.GET.get("nama_jasa", "").strip()
@@ -426,7 +426,7 @@ def status_pekerjaan_jasa(request):
         SELECT 
             pj.id, 
             sj.namasubkategori, 
-            u.name AS nama_pelanggan, 
+            u.nama AS nama_pelanggan, 
             pj.tglpemesanan, 
             pj.tglpekerjaan, 
             pj.totalbiaya,
@@ -496,7 +496,7 @@ def ubah_status_pesanan(request, pesanan_id, status_baru):
         messages.error(request, "Metode permintaan tidak diizinkan.")
         return redirect('status_pekerjaan_jasa')
     
-    user_id = "f02cceac-7781-4652-9780-cacf74680211"  # Ganti dengan request.user.id jika sudah implementasi autentikasi
+    user_id = request.user.id
     
     # Cek apakah pesanan memang dimiliki oleh pekerja ini
     cek_pesanan_query = """
