@@ -24,30 +24,13 @@
             </h1>
             <div class="text-center space-y-4">
                 {% if is_own_profile %}
-                    <div class="text-center mb-4">
-                        <img src="{{ photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
-                    </div>
                     <p class="text-lg sm:text-xl">Nama: {{ name }}</p>
+                    <p class="text-lg sm:text-xl">Level: {{ level }}</p>
                     <p class="text-lg sm:text-xl">Jenis Kelamin: {{ gender }}</p>
                     <p class="text-lg sm:text-xl">Nomor HP: {{ phone }}</p>
                     <p class="text-lg sm:text-xl">Tanggal Lahir: {{ birthdate }}</p>
                     <p class="text-lg sm:text-xl">Alamat: {{ address }}</p>
-                    {% if bank_name %}
-                    <p class="text-lg sm:text-xl">Nama Bank: {{ bank_name }}</p>
-                    <p class="text-lg sm:text-xl">No Rekening: {{ account_number }}</p>
-                    <p class="text-lg sm:text-xl">NPWP: {{ npwp }}</p>
-                    {% endif %}
-                    <p class="text-lg sm:text-xl">Rating: {{ rating }}</p>
-                    <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ completed_orders }}</p>
                     <p class="text-lg sm:text-xl">Saldo MyPay: {{ saldo }}</p>
-                    {% if job_categories %}
-                    <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
-                    <div class="text-lg sm:text-xl space-y-1 text-center">
-                        {% for category in job_categories %}
-                            <div>{{ category }}</div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
                 {% elif not is_own_profile and worker %}
                     <div class="text-center mb-4">
                         <img src="{{ worker.photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
