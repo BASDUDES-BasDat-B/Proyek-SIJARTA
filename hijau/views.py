@@ -413,10 +413,12 @@ def view_pesanan(request):
         conn.close()
         logger.debug("Database connection closed in view_pesanan view.")
 
+@require_POST
 @custom_login_required
 def create_order(request):
     """
     View untuk membuat pesanan baru.
+    Memastikan total_payment disimpan dalam satuan ribuan rupiah.
     """
     logger.debug("create_order view called.")
     if request.method != 'POST':
@@ -447,7 +449,10 @@ def create_order(request):
         return redirect('homepage')
 
     try:
+        # Pastikan total_payment dalam satuan ribuan rupiah
         total_payment = float(total_payment_str.replace('Rp ', '').replace(',', ''))
+        if total_payment < 1000:
+            total_payment *= 1000  # Konversi ke ribuan jika input kurang dari 1000
         logger.debug(f"Parsed total_payment: {total_payment}")
     except ValueError:
         logger.error("Invalid total_payment format.")
@@ -573,18 +578,18 @@ def calculate_total(request):
             with conn.cursor() as cursor:
                 # Ambil harga dari sesi layanan
                 cursor.execute("""
-                    SELECT harga FROM ServiceSession WHERE sesi = %s
+                    SELECT harga FROM SESI_LAYANAN WHERE sesi = %s
                 """, (session_sesi,))
                 result = cursor.fetchone()
                 if not result:
                     return JsonResponse({'success': False, 'error': 'Sesi layanan tidak ditemukan.'})
-                
+
                 harga = float(result[0])
 
                 # Hitung diskon jika ada kode diskon
                 if discount_code:
                     cursor.execute("""
-                        SELECT persen_diskon FROM Diskon WHERE kode = %s AND aktif = TRUE
+                        SELECT persen_diskon FROM DISKON WHERE kode = %s AND aktif = TRUE
                     """, (discount_code,))
                     discount = cursor.fetchone()
                     if discount:
@@ -597,8 +602,9 @@ def calculate_total(request):
                     total_payment = harga
 
                 return JsonResponse({'success': True, 'total_payment': total_payment})
-        
+
         except Exception as e:
+            logger.exception("Error calculating total payment.")
             return JsonResponse({'success': False, 'error': str(e)})
     else:
         return JsonResponse({'success': False, 'error': 'Invalid request method.'})
