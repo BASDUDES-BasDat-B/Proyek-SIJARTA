@@ -24,13 +24,37 @@
             </h1>
             <div class="text-center space-y-4">
                 {% if is_own_profile %}
+                    {% if worker %}
+                    <div class="text-center mb-4">
+                    <img src="{{ worker.photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
+                    </div>
+                    {% endif %}
                     <p class="text-lg sm:text-xl">Nama: {{ name }}</p>
                     <p class="text-lg sm:text-xl">Level: {{ level }}</p>
                     <p class="text-lg sm:text-xl">Jenis Kelamin: {{ gender }}</p>
                     <p class="text-lg sm:text-xl">Nomor HP: {{ phone }}</p>
                     <p class="text-lg sm:text-xl">Tanggal Lahir: {{ birthdate }}</p>
                     <p class="text-lg sm:text-xl">Alamat: {{ address }}</p>
+                    {% if worker.bank_name %}
+                    <p class="text-lg sm:text-xl">Nama Bank: {{ worker.bank_name }}</p>
+                    <p class="text-lg sm:text-xl">No Rekening: {{ worker.account_number }}</p>
+                    <p class="text-lg sm:text-xl">NPWP: {{ worker.npwp }}</p>
+                    <p class="text-lg sm:text-xl">Rating: {{ worker.rating }}</p>
+                    <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ worker.completed_orders }}</p>
+                    <p class="text-lg sm:text-xl">Saldo MyPay: {{ worker.saldo }}</p>
+                    {% if worker.job_categories %}
+                    <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
+                    <div class="text-lg sm:text-xl space-y-1 text-center">
+                        {% for category in worker.job_categories %}
+                            <div>{{ category }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    {% if not worker}
                     <p class="text-lg sm:text-xl">Saldo MyPay: {{ saldo }}</p>
+                    {% endif %}
+                
                 {% elif not is_own_profile and worker %}
                     <div class="text-center mb-4">
                         <img src="{{ worker.photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
@@ -44,10 +68,10 @@
                     <p class="text-lg sm:text-xl">Nama Bank: {{ worker.bank_name }}</p>
                     <p class="text-lg sm:text-xl">No Rekening: {{ worker.account_number }}</p>
                     <p class="text-lg sm:text-xl">NPWP: {{ worker.npwp }}</p>
-                    {% endif %}
                     <p class="text-lg sm:text-xl">Rating: {{ worker.rating }}</p>
                     <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ worker.completed_orders }}</p>
                     <p class="text-lg sm:text-xl">Saldo MyPay: {{ worker.saldo }}</p>
+                    {% endif %}
                     {% if worker.job_categories %}
                     <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
                     <div class="text-lg sm:text-xl space-y-1 text-center">
