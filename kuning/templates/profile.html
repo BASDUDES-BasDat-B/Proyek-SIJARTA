@@ -24,39 +24,37 @@
             </h1>
             <div class="text-center space-y-4">
                 {% if is_own_profile %}
-                    {% if worker %}
+                    {% if request.session.user.role == 'pekerja' %} <!-- if bank name juga bisa nanti diganti dah-->
                     <div class="text-center mb-4">
-                    <img src="{{ worker.photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
+                        <img src="{{ photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
                     </div>
                     {% endif %}
                     <p class="text-lg sm:text-xl">Nama: {{ name }}</p>
-                    {% if not worker}
+                    {% if request.session.user.role != 'pekerja'  %}
                     <p class="text-lg sm:text-xl">Level: {{ level }}</p>
                     {% endif %}
                     <p class="text-lg sm:text-xl">Jenis Kelamin: {{ gender }}</p>
                     <p class="text-lg sm:text-xl">Nomor HP: {{ phone }}</p>
                     <p class="text-lg sm:text-xl">Tanggal Lahir: {{ birthdate }}</p>
                     <p class="text-lg sm:text-xl">Alamat: {{ address }}</p>
-                    {% if worker.bank_name %}
-                    <p class="text-lg sm:text-xl">Nama Bank: {{ worker.bank_name }}</p>
-                    <p class="text-lg sm:text-xl">No Rekening: {{ worker.account_number }}</p>
-                    <p class="text-lg sm:text-xl">NPWP: {{ worker.npwp }}</p>
-                    <p class="text-lg sm:text-xl">Rating: {{ worker.rating }}</p>
-                    <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ worker.completed_orders }}</p>
-                    <p class="text-lg sm:text-xl">Saldo MyPay: {{ worker.saldo }}</p>
-                    {% if worker.job_categories %}
+                    <p class="text-lg sm:text-xl">Saldo MyPay: Rp{{ saldo }}</p>
+                    {% if bank_name %}
+                    <p class="text-lg sm:text-xl">Nama Bank: {{ bank_name }}</p>
+                    <p class="text-lg sm:text-xl">No Rekening: {{ account_number }}</p>
+                    <p class="text-lg sm:text-xl">NPWP: {{ npwp }}</p>
+                    {% endif %}
+                    {% if worker %}
+                    <p class="text-lg sm:text-xl">Rating: {{ rating }}</p>
+                    <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ completed_orders }}</p>
+                    {% endif %}
+                    {% if job_categories %}
                     <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
                     <div class="text-lg sm:text-xl space-y-1 text-center">
-                        {% for category in worker.job_categories %}
+                        {% for category in job_categories %}
                             <div>{{ category }}</div>
                         {% endfor %}
                     </div>
                     {% endif %}
-                    {% endif %}
-                    {% if not worker}
-                    <p class="text-lg sm:text-xl">Saldo MyPay: {{ saldo }}</p>
-                    {% endif %}
-                
                 {% elif not is_own_profile and worker %}
                     <div class="text-center mb-4">
                         <img src="{{ worker.photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
@@ -70,10 +68,10 @@
                     <p class="text-lg sm:text-xl">Nama Bank: {{ worker.bank_name }}</p>
                     <p class="text-lg sm:text-xl">No Rekening: {{ worker.account_number }}</p>
                     <p class="text-lg sm:text-xl">NPWP: {{ worker.npwp }}</p>
+                    {% endif %}
                     <p class="text-lg sm:text-xl">Rating: {{ worker.rating }}</p>
                     <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ worker.completed_orders }}</p>
                     <p class="text-lg sm:text-xl">Saldo MyPay: {{ worker.saldo }}</p>
-                    {% endif %}
                     {% if worker.job_categories %}
                     <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
                     <div class="text-lg sm:text-xl space-y-1 text-center">
@@ -84,6 +82,7 @@
                     {% endif %}
                 {% endif %}
             </div>
+
             {% if is_own_profile %}
             <button onclick="toggleUpdateForm()" class="mt-4 mx-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 block">
                 Update
