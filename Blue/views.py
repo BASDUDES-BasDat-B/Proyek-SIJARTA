@@ -1,5 +1,3 @@
-# views.py
-
 import psycopg2
 from psycopg2 import sql
 from django.shortcuts import render, redirect
@@ -11,22 +9,15 @@ from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 import uuid
 from datetime import datetime, timedelta
-from utils.db_connection import get_db_connection;
+from utils.db_connection import get_db_connection
+import uuid  # Ensure uuid is imported
 
-# # Helper function to get a database connection
-# def get_db_connection():
-#     conn = psycopg2.connect(
-#         dbname=settings.DATABASES['default']['NAME'],
-#         user=settings.DATABASES['default']['USER'],
-#         password=settings.DATABASES['default']['PASSWORD'],
-#         host=settings.DATABASES['default']['HOST'],
-#         port=settings.DATABASES['default']['PORT']
-#     )
-#     return conn
-def execute_query(sql_query, params=None):
+def execute_query(sql_query, params=None, fetchone=False):
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(sql_query, params or [])
+            if fetchone:
+                return cursor.fetchone()
             return cursor.fetchall()
 # @login_required
 def discount_view(request):
@@ -94,15 +85,16 @@ def discount_view(request):
     return render(request, 'discount.html', context)
 
 
-# @login_required
-# @require_POST
+
+@login_required
+@require_POST
 def purchase_voucher(request):
     """
     View to handle voucher purchase.
     Expects 'voucher_code' and 'payment_method_id' in POST data.
     Returns JSON response indicating success or failure.
     """
-    user_id = request.user.id  # Assuming you have a custom user model linked to the "USER" table
+    user_id = request.user.id  # Ensure the user is authenticated
     voucher_code = request.POST.get('voucher_code')
     payment_method_id = request.POST.get('payment_method_id')
 
@@ -117,11 +109,11 @@ def purchase_voucher(request):
             JOIN DISKON d ON v.Kode = d.Kode
             WHERE v.Kode = %s
         """
-        voucher = execute_query(voucher_query, (voucher_code,))
+        voucher = execute_query(voucher_query, (voucher_code,), fetchone=True)
         if not voucher:
             return JsonResponse({'status': 'error', 'message': 'Voucher not found.'}, status=404)
 
-        jml_hari_berlaku, kuota_penggunaan, harga_voucher, potongan, min_tr_pemesanan = voucher[0]
+        jml_hari_berlaku, kuota_penggunaan, harga_voucher, potongan, min_tr_pemesanan = voucher
 
         # Check if user exists in PELANGGAN
         pelanggan_query = """
@@ -129,11 +121,11 @@ def purchase_voucher(request):
             FROM PELANGGAN
             WHERE Id = %s
         """
-        pelanggan = execute_query(pelanggan_query, (user_id,))
+        pelanggan = execute_query(pelanggan_query, (user_id,), fetchone=True)
         if not pelanggan:
             return JsonResponse({'status': 'error', 'message': 'User not found as Pelanggan.'}, status=404)
 
-        pelanggan_id, saldo_mypay = pelanggan[0]
+        pelanggan_id, saldo_mypay = pelanggan
 
         # Fetch selected payment method name
         payment_method_query = """
@@ -141,11 +133,11 @@ def purchase_voucher(request):
             FROM METODE_BAYAR
             WHERE Id = %s
         """
-        payment_method = execute_query(payment_method_query, (payment_method_id,))
+        payment_method = execute_query(payment_method_query, (payment_method_id,), fetchone=True)
         if not payment_method:
             return JsonResponse({'status': 'error', 'message': 'Payment method not found.'}, status=404)
 
-        payment_method_name = payment_method[0]
+        payment_method_name = payment_method[0]  # Correctly fetch the first element
 
         # Initialize variables for transaction
         transaction_success = False
