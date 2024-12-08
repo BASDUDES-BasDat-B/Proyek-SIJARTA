@@ -224,7 +224,6 @@ def edit_profile(request):
     conn = get_db_connection()
 
     if request.method == 'POST':
-        # Ambil data dari form
         phone = request.POST.get("phone")
         name = request.POST.get("name")
         address = request.POST.get("address")
@@ -233,7 +232,6 @@ def edit_profile(request):
 
         try:
             with conn.cursor() as cursor:
-                # Ambil data pengguna lama
                 cursor.execute("""
                     SELECT Nama, NoHp, Alamat, JenisKelamin, TglLahir
                     FROM "USER"
@@ -264,7 +262,6 @@ def edit_profile(request):
                     level = pelanggan_data[0] if pelanggan_data else None
 
                 elif request.session['user']['role'] == 'pekerja':
-                    # Ambil data pekerja
                     bank = request.POST.get("bank")
                     if bank:
                         bank = format_bank_name(bank)
@@ -304,7 +301,6 @@ def edit_profile(request):
                 """, (user_id,))
                 updated_user_data = cursor.fetchone()
 
-                # Perbarui context dan session
                 context = {
                     "name": updated_user_data[0],
                     "phone": updated_user_data[1],
@@ -312,6 +308,7 @@ def edit_profile(request):
                     "gender": updated_user_data[3],
                     "birthdate": updated_user_data[4].strftime('%Y-%m-%d') if updated_user_data[4] else '',
                     "saldo": float(updated_user_data[5]),
+                    'is_own_profile': True,
                 }
 
                 updated_session_user = {
@@ -326,13 +323,13 @@ def edit_profile(request):
                 }
 
                 if request.session['user']['role'] == 'pelanggan':
-                    context.update({"level": level})
-                    updated_session_user.update({"level": level})
+                    context["level"] = level
+                    updated_session_user["level"] = level
 
                 elif request.session['user']['role'] == 'pekerja':
-                    categories = get_job_categories(phone)
+                    categories = get_job_categories(updated_user_data[1])  # Assuming 'phone' is at index 1
                     context.update({
-                        "bank": old_bank,
+                        "bank_name": old_bank,
                         "account_number": old_account_number,
                         "npwp": old_npwp,
                         "photo_link": old_photo_link,
@@ -371,102 +368,7 @@ def edit_profile(request):
             conn.rollback()
             messages.error(request, f"Error: {str(e)}")
         finally:
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute("""
-                        SELECT Nama, NoHp, Alamat, JenisKelamin, TglLahir, SaldoMyPay
-                        FROM "USER"
-                        WHERE Id = %s
-                    """, (user_id,))
-                    updated_user_data = cursor.fetchone()
-
-                    if updated_user_data:
-                        context = {
-                            "name": updated_user_data[0],
-                            "phone": updated_user_data[1],
-                            "address": updated_user_data[2],
-                            "gender": updated_user_data[3],
-                            "birthdate": updated_user_data[4].strftime('%Y-%m-%d') if updated_user_data[4] else '',
-                            "saldo": float(updated_user_data[5]),
-                        }
-
-                        # Perbarui data session user
-                        updated_session_user = {
-                            'Id': user_id,
-                            'Nama': updated_user_data[0],
-                            'phone': updated_user_data[1],
-                            'alamat': updated_user_data[2],
-                            'gender': updated_user_data[3],
-                            'TglLahir': updated_user_data[4].strftime('%Y-%m-%d') if updated_user_data[4] else '',
-                            'saldo': float(updated_user_data[5]),
-                            'role': request.session['user']['role'],
-                        }
-
-                        if request.session['user']['role'] == 'pelanggan':
-                            cursor.execute("""
-                                SELECT Level
-                                FROM PELANGGAN
-                                WHERE Id = %s
-                            """, (user_id,))
-                            pelanggan_data = cursor.fetchone()
-                            level = pelanggan_data[0] if pelanggan_data else None
-                            context.update({"level": level})
-                            updated_session_user.update({"level": level})
-
-                        elif request.session['user']['role'] == 'pekerja':
-                            cursor.execute("""
-                                SELECT NamaBank, NomorRekening, NPWP, LinkFoto, Rating, JmlPesananSelesai
-                                FROM PEKERJA
-                                WHERE Id = %s
-                            """, (user_id,))
-                            pekerja_data = cursor.fetchone()
-
-                            if pekerja_data:
-                                bank_name = pekerja_data[0]
-                                account_number = pekerja_data[1]
-                                npwp = pekerja_data[2]
-                                photo_link = pekerja_data[3]
-                                rating = pekerja_data[4]
-                                completed_orders = pekerja_data[5]
-
-                                categories = get_job_categories(updated_user_data[1])
-
-                                context.update({
-                                    "bank": bank_name,
-                                    "account_number": account_number,
-                                    "npwp": npwp,
-                                    "photo_link": photo_link,
-                                    "job_categories": categories,
-                                    "rating": rating,
-                                    "completed_orders": completed_orders,
-                                })
-
-                                updated_session_user.update({
-                                    "bank_name": bank_name,
-                                    "account_number": account_number,
-                                    "npwp": npwp,
-                                    "photo_link": photo_link,
-                                    "job_categories": categories,
-                                    "rating": rating,
-                                    "completed_orders": completed_orders,
-                                })
-
-                        request.session['user'] = updated_session_user
-                        request.session.modified = True
-
-                        return render(request, 'profile.html', context)
-
-                    else:
-                        # Jika data user tidak ditemukan sama sekali
-                        messages.error(request, "Data pengguna tidak ditemukan.")
-                        return redirect('homepage')
-
-            except Exception as e:
-                messages.error(request, f"Error: {str(e)}")
-                return redirect('homepage')
-            finally:
-                conn.close()
-        # return render(request, 'profile.html')
+            conn.close()
 
     else:
         try:
@@ -487,6 +389,7 @@ def edit_profile(request):
                         "birthdate": user_data[3].strftime('%Y-%m-%d') if user_data[3] else '',
                         "address": user_data[4],
                         "saldo": float(user_data[5]),
+                        'is_own_profile': True,
                     }
 
                     updated_session_user = {
@@ -508,10 +411,10 @@ def edit_profile(request):
                         """, (user_id,))
                         pelanggan_data = cursor.fetchone()
                         level = pelanggan_data[0] if pelanggan_data else None
-                        context.update({"level": level})
-                        updated_session_user.update({"level": level})
+                        context["level"] = level
+                        updated_session_user["level"] = level
 
-                    if request.session['user']['role'] == 'pekerja':
+                    elif request.session['user']['role'] == 'pekerja':
                         cursor.execute("""
                             SELECT NamaBank, NomorRekening, NPWP, LinkFoto, Rating, JmlPesananSelesai
                             FROM PEKERJA
@@ -520,24 +423,26 @@ def edit_profile(request):
                         pekerja_data = cursor.fetchone()
 
                         if pekerja_data:
-                            categories = get_job_categories(user_data[1])
+                            bank_name, account_number, npwp, photo_link, rating, completed_orders = pekerja_data
+                            categories = get_job_categories(user_data[1])  # Assuming 'phone' is at index 1
+
                             context.update({
-                                "bank": pekerja_data[0],
-                                "account_number": pekerja_data[1],
-                                "npwp": pekerja_data[2],
-                                "photo_link": pekerja_data[3],
+                                "bank_name": bank_name,
+                                "account_number": account_number,
+                                "npwp": npwp,
+                                "photo_link": photo_link,
                                 "job_categories": categories,
-                                "rating": pekerja_data[4],
-                                "completed_orders": pekerja_data[5],
+                                "rating": rating,
+                                "completed_orders": completed_orders,
                             })
                             updated_session_user.update({
-                                "bank_name": pekerja_data[0],
-                                "account_number": pekerja_data[1],
-                                "npwp": pekerja_data[2],
-                                "photo_link": pekerja_data[3],
+                                "bank_name": bank_name,
+                                "account_number": account_number,
+                                "npwp": npwp,
+                                "photo_link": photo_link,
                                 "job_categories": categories,
-                                "rating": pekerja_data[4],
-                                "completed_orders": pekerja_data[5],
+                                "rating": rating,
+                                "completed_orders": completed_orders,
                             })
 
                     request.session['user'] = updated_session_user
@@ -548,6 +453,8 @@ def edit_profile(request):
             messages.error(request, f"Error: {str(e)}")
         finally:
             conn.close()
+
+    return redirect('homepage')
 
 def logout_view(request):
     if 'user' in request.session:

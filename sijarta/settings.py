@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 from dotenv import load_dotenv
+import dj_database_url
 
 # ===========================
 # Load Environment Variables
@@ -87,20 +88,12 @@ WSGI_APPLICATION = 'sijarta.wsgi.application'
 # Database Configuration
 # ===========================
 
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': tmpPostgres.path.lstrip('/'),
-        'USER': tmpPostgres.username,
-        'PASSWORD': tmpPostgres.password,
-        'HOST': tmpPostgres.hostname,
-        'PORT': tmpPostgres.port or 5432,
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
 # ===========================
