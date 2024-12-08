@@ -9,8 +9,8 @@
     <title>Vouchers and Promos</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script>
-        // Function to handle pop-up for purchasing a voucher
-        function showPopup(kode, hariBerlaku, kuota) {
+        // Function to show the purchase success or failure popup
+        function showPopup(status, message) {
             const popup = document.getElementById("popup");
             const popupMessage = document.getElementById("popup-message");
             const popupTitle = document.getElementById("popup-title");
@@ -19,19 +19,16 @@
             popupMessage.classList.remove("text-green-700", "text-red-700");
             popupTitle.classList.remove("text-green-700", "text-red-700");
 
-            if (kode === "vouchergagal") {
-                // Failure case
-                popupMessage.innerHTML = `Gagal membeli voucher dengan kode <strong>${kode}</strong>. Silakan coba lagi.`;
-                popupMessage.classList.add("text-red-700");
-                popupTitle.innerHTML = "Gagal";
-                popupTitle.classList.add("text-red-700");
-            } else {
-                // Success case
-                popupMessage.innerHTML = `Sukses membeli voucher <strong>${kode}</strong>. 
-                    Akan berlaku sampai tanggal <strong>${hariBerlaku}</strong> dengan kuota <strong>${kuota}</strong>.`;
+            if (status === "success") {
+                popupMessage.innerHTML = message;
                 popupMessage.classList.add("text-green-700");
                 popupTitle.innerHTML = "Berhasil";
                 popupTitle.classList.add("text-green-700");
+            } else {
+                popupMessage.innerHTML = message;
+                popupMessage.classList.add("text-red-700");
+                popupTitle.innerHTML = "Gagal";
+                popupTitle.classList.add("text-red-700");
             }
 
             // Show the popup
@@ -43,6 +40,88 @@
             const popup = document.getElementById("popup");
             popup.classList.add("hidden");
         }
+
+        // Function to open the payment modal
+        function openPaymentModal(voucher) {
+            // Set the selected voucher details in hidden fields
+            document.getElementById("selected-voucher-code").value = voucher.kode;
+            document.getElementById("selected-voucher-hari-berlaku").value = voucher.hariBerlaku;
+            document.getElementById("selected-voucher-kuota").value = voucher.jumlah_kuota_penggunaan;
+
+            // Show the payment modal
+            const paymentModal = document.getElementById("payment-modal");
+            paymentModal.classList.remove("hidden");
+        }
+
+        // Function to close the payment modal
+        function closePaymentModal() {
+            const paymentModal = document.getElementById("payment-modal");
+            paymentModal.classList.add("hidden");
+        }
+
+        // Function to get CSRF token from cookies
+        function getCSRFToken() {
+            let cookieValue = null;
+            const name = 'csrftoken';
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Handle payment form submission
+        document.addEventListener("DOMContentLoaded", function() {
+            const paymentForm = document.getElementById("payment-form");
+            paymentForm.addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                const voucherCode = document.getElementById("selected-voucher-code").value;
+                const paymentMethodId = document.getElementById("payment-method").value;
+                const csrfToken = getCSRFToken();
+
+                if (!paymentMethodId) {
+                    alert("Pilih metode pembayaran terlebih dahulu.");
+                    return;
+                }
+
+                // Prepare data
+                const data = new FormData();
+                data.append('voucher_code', voucherCode);
+                data.append('payment_method_id', paymentMethodId);
+
+                // Send AJAX POST request
+                fetch("{% url 'purchase_voucher' %}", {  // Ensure that 'purchase_voucher' URL is correctly defined in urls.py
+                    method: "POST",
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: data
+                })
+                .then(response => response.json())
+                .then(data => {
+                    closePaymentModal();
+                    if (data.status === 'success') {
+                        const successMessage = `Sukses membeli voucher <strong>${data.kode}</strong>. 
+                            Akan berlaku sampai tanggal <strong>${data.hari_berlaku}</strong> dengan kuota <strong>${data.kuota}</strong>.`;
+                        showPopup("success", successMessage);
+                    } else {
+                        showPopup("error", data.message || "Gagal membeli voucher.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    closePaymentModal();
+                    showPopup("error", "Terjadi kesalahan saat memproses pembelian.");
+                });
+            });
+        });
     </script>
 </head>
 <body class="bg-gray-100">
@@ -63,7 +142,7 @@
                             <span class="text-gray-700">Hari Berlaku: {{ voucher.hari_berlaku }}</span>
                             <span class="text-gray-700">Harga: {{ voucher.harga_voucher }}</span>
                             <button 
-                                onclick="showPopup('{{ voucher.kode }}', '{{ voucher.hari_berlaku }}', '{{ voucher.jumlah_kuota_penggunaan }}')"
+                                onclick='openPaymentModal({ "kode": "{{ voucher.kode }}", "hariBerlaku": "{{ voucher.hari_berlaku }}", "jumlah_kuota_penggunaan": "{{ voucher.jumlah_kuota_penggunaan }}" })'
                                 class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
                                 Beli
                             </button>
@@ -92,6 +171,36 @@
             {% else %}
                 <p class="text-gray-100">No promos available.</p>
             {% endif %}
+        </div>
+    </div>
+
+    <!-- Payment Method Modal -->
+    <div id="payment-modal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 class="text-lg font-semibold mb-4">Pilih Metode Pembayaran</h3>
+            <form id="payment-form">
+                {% csrf_token %}
+                <input type="hidden" id="selected-voucher-code" name="voucher_code" value="">
+                <input type="hidden" id="selected-voucher-hari-berlaku" name="hari_berlaku" value="">
+                <input type="hidden" id="selected-voucher-kuota" name="kuota" value="">
+                <div class="mb-4">
+                    <label for="payment-method" class="block text-gray-700">Metode Pembayaran:</label>
+                    <select id="payment-method" name="payment_method_id" class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
+                        <option value="">Pilih metode pembayaran</option>
+                        {% for method in payment_methods %}
+                            <option value="{{ method.id }}">{{ method.nama }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" onclick="closePaymentModal()" class="mr-2 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                        Beli
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
