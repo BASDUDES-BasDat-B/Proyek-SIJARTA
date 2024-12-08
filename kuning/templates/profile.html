@@ -3,110 +3,140 @@
 
 {% block content %}
 <div class="container mx-auto mt-12 relative z-10">
-<div class="flex items-center justify-center py-8 sm:py-20">
-    <div class="w-full max-w-3xl p-6 sm:p-8 border border-blue-300 rounded-lg space-y-4 overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[calc(100vh-24rem)]">
-        {% if messages %}
-        <div class="fixed top-4 right-4 z-50 space-y-2">
-            {% for message in messages %}
-                <div class="flex items-center justify-between bg-red-500 text-white px-4 py-3 rounded shadow-lg">
-                    <span>{{ message }}</span>
-                    <button onclick="this.parentElement.style.display='none'" class="text-white font-bold">&times;</button>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-        <h1 class="text-2xl sm:text-3xl font-bold text-center mb-6">Keterangan Profil Anda</h1>
-        <div class="text-center space-y-4">
-            {% if request.session.user.role == 'pekerja' %}
-            <div class="text-center mb-4">
-                <img src="{{ request.session.user.photo_link }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
+    <div class="flex items-center justify-center py-8 sm:py-20">
+        <div class="w-full max-w-3xl p-6 sm:p-8 border border-blue-300 rounded-lg space-y-4 overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[calc(100vh-24rem)]">
+            {% if messages %}
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                {% for message in messages %}
+                    <div class="flex items-center justify-between bg-red-500 text-white px-4 py-3 rounded shadow-lg">
+                        <span>{{ message }}</span>
+                        <button onclick="this.parentElement.style.display='none'" class="text-white font-bold">&times;</button>
+                    </div>
+                {% endfor %}
             </div>
             {% endif %}
-            <p class="text-lg sm:text-xl">Nama: {{ request.session.user.Nama }}</p>
-            {% if request.session.user.role == 'pelanggan' %}
-            <p class="text-lg sm:text-xl">Level: {{ request.session.user.level }}</p>
-            {% endif %}
-            <p class="text-lg sm:text-xl">Jenis Kelamin: {{ request.session.user.gender }}</p>
-            <p class="text-lg sm:text-xl">Nomor HP: {{ request.session.user.phone }}</p>
-            <p class="text-lg sm:text-xl">Tanggal Lahir: {{ request.session.user.TglLahir }}</p>
-            <p class="text-lg sm:text-xl">Alamat: {{ request.session.user.alamat }}</p>
-            <p class="text-lg sm:text-xl">Saldo MyPay: Rp{{ request.session.user.saldo }}</p>
-
-            {% if request.session.user.role == 'pekerja' %}
-            <p class="text-lg sm:text-xl">Nama Bank: {{ bank }}</p>
-            <p class="text-lg sm:text-xl">No Rekening: {{ account_number }}</p>
-            <p class="text-lg sm:text-xl">NPWP: {{ npwp }}</p>
-            <p class="text-lg sm:text-xl">Rating: {{ rating }}</p>
-            <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ completed_orders }}</p>
-                <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
-                <div class="text-lg sm:text-xl space-y-1 text-center">
-                    {% for category in request.session.user.job_categories %}
-                        <div>{{ category }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
-        <button onclick="toggleUpdateForm()" class="mt-4 mx-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 block">
-            Update
-        </button>
-
-        <div id="updateForm" class="hidden bg-gray-100 p-6 sm:p-8 border border-gray-300 rounded-lg space-y-4">
-            <form method="post" class="space-y-4">
-                {% csrf_token %}
-                <label for="name" class="block text-sm font-medium">Nama:</label>
-                <input type="text" id="name" name="name" value="{{ request.session.user.Nama }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
-
-                <label class="block text-sm font-medium">Jenis Kelamin:</label>
-                <div class="flex items-center space-x-4">
-                    <label><input type="radio" name="gender" value="L" {% if request.session.user.gender == "L" %}checked{% endif %}> L</label>
-                    <label><input type="radio" name="gender" value="P" {% if request.session.user.gender == "P" %}checked{% endif %}> P</label>
-                </div><br>
-
-                <label for="phone" class="block text-sm font-medium">No HP:</label>
-                <input type="number" id="phone" name="phone" value="{{ request.session.user.phone }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
-
-                <label for="birthdate" class="block text-sm font-medium">Tanggal Lahir:</label>
-                <input type="date" id="birthdate" name="birthdate" value="{{ request.session.user.birthdate }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
-
-                <label for="address" class="block text-sm font-medium">Alamat:</label>
-                <textarea id="address" name="address" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>{{ request.session.user.address }}</textarea><br>
-
-                {% if request.session.user.role == 'pekerja' %}
-                    <label for="bank" class="block text-sm font-medium">Nama Bank:</label>
-                    <select id="bank" name="bank" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
-                        <option value="" disabled selected>-- Pilih Bank --</option>
-                        <option value="gopay" {% if request.session.user.bank_name == "GoPay" %}selected{% endif %}>GoPay</option>
-                        <option value="ovo" {% if request.session.user.bank_name == "OVO" %}selected{% endif %}>OVO</option>
-                        <option value="bca" {% if request.session.user.bank_name == "BCA" %}selected{% endif %}>BCA</option>
-                        <option value="bni" {% if request.session.user.bank_name == "BNI" %}selected{% endif %}>BNI</option>
-                        <option value="mandiri" {% if request.session.user.bank_name == "Mandiri" %}selected{% endif %}>Mandiri</option>
-                    </select><br>
-
-                    <label for="account_number" class="block text-sm font-medium">No Rekening:</label>
-                    <input type="text" id="account_number" name="account_number" value="{{ request.session.user.account_number }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
-
-                    <label for="npwp" class="block text-sm font-medium">NPWP:</label>
-                    <input type="text" id="npwp" name="npwp" value="{{ request.session.user.npwp }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
-                    
-                    <label for="photo_link" class="block text-sm font-medium">URL Foto:</label>
-                    <input type="url" id="photo_link" name="photo_link" value="{{ request.session.user.photo_link }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
-
+            <h1 class="text-2xl sm:text-3xl font-bold text-center mb-6">
+                {% if is_own_profile %}
+                    Profil Anda
+                {% elif not is_own_profile %}
+                    Profil Pekerja
+                {% endif %}
+            </h1>
+            <div class="text-center space-y-4">
+                {% if is_own_profile %}
+                    <div class="text-center mb-4">
+                        <img src="{{ photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
+                    </div>
+                    <p class="text-lg sm:text-xl">Nama: {{ name }}</p>
+                    <p class="text-lg sm:text-xl">Jenis Kelamin: {{ gender }}</p>
+                    <p class="text-lg sm:text-xl">Nomor HP: {{ phone }}</p>
+                    <p class="text-lg sm:text-xl">Tanggal Lahir: {{ birthdate }}</p>
+                    <p class="text-lg sm:text-xl">Alamat: {{ address }}</p>
+                    {% if bank_name %}
+                    <p class="text-lg sm:text-xl">Nama Bank: {{ bank_name }}</p>
+                    <p class="text-lg sm:text-xl">No Rekening: {{ account_number }}</p>
+                    <p class="text-lg sm:text-xl">NPWP: {{ npwp }}</p>
                     {% endif %}
-                    
-                <button type="submit" class="w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Submit</button>
-            </form>
+                    <p class="text-lg sm:text-xl">Rating: {{ rating }}</p>
+                    <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ completed_orders }}</p>
+                    <p class="text-lg sm:text-xl">Saldo MyPay: {{ saldo }}</p>
+                    {% if job_categories %}
+                    <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
+                    <div class="text-lg sm:text-xl space-y-1 text-center">
+                        {% for category in job_categories %}
+                            <div>{{ category }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                {% elif not is_own_profile and worker %}
+                    <div class="text-center mb-4">
+                        <img src="{{ worker.photo_link|default:'/static/images/default-avatar.png' }}" alt="Foto Pekerja" class="w-32 h-32 rounded-full object-cover mx-auto">
+                    </div>
+                    <p class="text-lg sm:text-xl">Nama: {{ worker.name }}</p>
+                    <p class="text-lg sm:text-xl">Jenis Kelamin: {{ worker.gender }}</p>
+                    <p class="text-lg sm:text-xl">Nomor HP: {{ worker.phone }}</p>
+                    <p class="text-lg sm:text-xl">Tanggal Lahir: {{ worker.birthdate }}</p>
+                    <p class="text-lg sm:text-xl">Alamat: {{ worker.address }}</p>
+                    {% if worker.bank_name %}
+                    <p class="text-lg sm:text-xl">Nama Bank: {{ worker.bank_name }}</p>
+                    <p class="text-lg sm:text-xl">No Rekening: {{ worker.account_number }}</p>
+                    <p class="text-lg sm:text-xl">NPWP: {{ worker.npwp }}</p>
+                    {% endif %}
+                    <p class="text-lg sm:text-xl">Rating: {{ worker.rating }}</p>
+                    <p class="text-lg sm:text-xl">Jumlah Pesanan Selesai: {{ worker.completed_orders }}</p>
+                    <p class="text-lg sm:text-xl">Saldo MyPay: {{ worker.saldo }}</p>
+                    {% if worker.job_categories %}
+                    <p class="text-lg sm:text-xl">Kategori Pekerjaan:</p>
+                    <div class="text-lg sm:text-xl space-y-1 text-center">
+                        {% for category in worker.job_categories %}
+                            <div>{{ category }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            {% if is_own_profile %}
+            <button onclick="toggleUpdateForm()" class="mt-4 mx-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 block">
+                Update
+            </button>
+
+            <div id="updateForm" class="hidden bg-gray-100 p-6 sm:p-8 border border-gray-300 rounded-lg space-y-4">
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <label for="name" class="block text-sm font-medium">Nama:</label>
+                    <input type="text" id="name" name="name" value="{{ name }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
+
+                    <label class="block text-sm font-medium">Jenis Kelamin:</label>
+                    <div class="flex items-center space-x-4">
+                        <label><input type="radio" name="gender" value="L" {% if gender == "L" %}checked{% endif %}> L</label>
+                        <label><input type="radio" name="gender" value="P" {% if gender == "P" %}checked{% endif %}> P</label>
+                    </div><br>
+
+                    <label for="phone" class="block text-sm font-medium">No HP:</label>
+                    <input type="number" id="phone" name="phone" value="{{ phone }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
+
+                    <label for="birthdate" class="block text-sm font-medium">Tanggal Lahir:</label>
+                    <input type="date" id="birthdate" name="birthdate" value="{{ birthdate }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
+
+                    <label for="address" class="block text-sm font-medium">Alamat:</label>
+                    <textarea id="address" name="address" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>{{ address }}</textarea><br>
+
+                    {% if bank_name %}
+                        <label for="bank" class="block text-sm font-medium">Nama Bank:</label>
+                        <select id="bank" name="bank" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                            <option value="" disabled selected>-- Pilih Bank --</option>
+                            <option value="gopay" {% if bank_name == "GoPay" %}selected{% endif %}>GoPay</option>
+                            <option value="ovo" {% if bank_name == "OVO" %}selected{% endif %}>OVO</option>
+                            <option value="bca" {% if bank_name == "BCA" %}selected{% endif %}>BCA</option>
+                            <option value="bni" {% if bank_name == "BNI" %}selected{% endif %}>BNI</option>
+                            <option value="mandiri" {% if bank_name == "Mandiri" %}selected{% endif %}>Mandiri</option>
+                        </select><br>
+
+                        <label for="account_number" class="block text-sm font-medium">No Rekening:</label>
+                        <input type="text" id="account_number" name="account_number" value="{{ account_number }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
+
+                        <label for="npwp" class="block text-sm font-medium">NPWP:</label>
+                        <input type="text" id="npwp" name="npwp" value="{{ npwp }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
+                        
+                        <label for="photo_link" class="block text-sm font-medium">URL Foto:</label>
+                        <input type="url" id="photo_link" name="photo_link" value="{{ photo_link }}" class="w-full px-4 py-2 border border-gray-300 rounded-md" required><br>
+                    {% endif %}
+                        
+                    <button type="submit" class="w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Submit</button>
+                </form>
+            </div>
+            {% endif %}
         </div>
+
+        <script>
+            function toggleUpdateForm() {
+                const form = document.getElementById('updateForm');
+                if (form) {
+                    form.classList.toggle('hidden');
+                }
+            }
+        </script>
     </div>
 </div>
-
-<script>
-    function toggleUpdateForm() {
-        event.preventDefault(); 
-        const form = document.getElementById('updateForm');
-        if (form) {
-            form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
-        }
-    }
-</script>
 {% endblock %}

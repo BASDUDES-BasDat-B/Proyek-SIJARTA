@@ -4,9 +4,6 @@
 {% block title %}{{ subcategory.name }} - SIJARTA{% endblock %}
 
 {% block content %}
-<!-- Definisikan URL sebagai variabel -->
-{% url 'edit_profile' as edit_profile_url %}
-
 <!-- Header Section -->
 <section class="container mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
@@ -34,7 +31,7 @@
                     <p class="text-blue-600 font-bold">Rp {{ session.harga|floatformat:0 }}</p>
                 </div>
                 {% if not is_worker %}
-                <button onclick="showOrderModal('{{ session.sesi }}')" 
+                <button onclick="showOrderModal('{{ session.sesi }}', '{{ session.harga }}')" 
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Pesan
                 </button>
@@ -52,7 +49,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {% for worker in workers %}
             <div class="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                 onclick="window.location.href='{{ edit_profile_url }}'">
+                 onclick="window.location.href='{% url 'worker_profile' worker.id %}'">
                 <div class="text-center">
                     <img src="{{ worker.profile_picture|default:'/static/images/default-avatar.png' }}" 
                          alt="{{ worker.name }}"
@@ -111,7 +108,7 @@
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold">Form Pemesanan Jasa</h2>
             <button onclick="closeOrderModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times"></i>
+                &times;
             </button>
         </div>
         <form id="orderForm" method="POST" action="{% url 'create_order' %}">
@@ -124,7 +121,7 @@
                     Tanggal Pemesanan
                 </label>
                 <input type="text" name="order_date" 
-                       value="{{ now|date:'d/m/Y' }}" 
+                       id="order_date"
                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                        readonly>
             </div>
@@ -157,9 +154,9 @@
                 </label>
                 <select name="payment_method" 
                         class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <option value="transfer">Transfer Bank</option>
-                    <option value="ewallet">E-Wallet</option>
-                    <option value="cod">Cash on Delivery</option>
+                    {% for metode in metode_bayar %}
+                    <option value="{{ metode.Id }}">{{ metode.Nama }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
@@ -174,8 +171,20 @@
 </div>
 
 <script>
-function showOrderModal(sessionSesi) {
+function showOrderModal(sessionSesi, harga) {
     document.getElementById('sessionId').value = sessionSesi;
+    
+    // Set current date
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+    const year = today.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
+    document.getElementById('order_date').value = formattedDate;
+    
+    // Initialize total_payment with harga
+    document.getElementById('total_payment').value = 'Rp ' + parseFloat(harga).toLocaleString('id-ID');
+
     document.getElementById('orderModal').classList.remove('hidden');
 }
 
@@ -184,7 +193,6 @@ function closeOrderModal() {
 }
 
 function joinService() {
-    // Kirim permintaan bergabung melalui AJAX
     fetch("{% url 'join_service' subcategory.slug %}", {
         method: 'POST',
         headers: {
@@ -226,7 +234,7 @@ function calculateTotal() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            document.getElementById('total_payment').value = 'Rp ' + data.total_payment.toLocaleString();
+            document.getElementById('total_payment').value = 'Rp ' + parseFloat(data.total_payment).toLocaleString('id-ID');
         } else {
             alert('Gagal menghitung total: ' + data.error);
         }
