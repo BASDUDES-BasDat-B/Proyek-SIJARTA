@@ -91,7 +91,7 @@ def homepage(request):
                     logger.debug(f"Filtered subcategories for category_id {category['id']} by search_query: {search_query} (from {original_count} to {filtered_count})")
 
         context = {'categories': categories_data}
-        logger.debug("Rendering homepage.html with context.")
+        logger.debug("Rendering homepage.html dengan context.")
         return render(request, 'homepage.html', context)
     except Exception as e:
         logger.exception("Error fetching homepage data.")
@@ -266,7 +266,7 @@ def subcategory_jasa(request, category_slug, subcategory_slug):
         'category': {
             'id': category_id,
             'name': nama_kategori,
-            'slug': category_slug,
+            'slug': slugify(nama_kategori).lower(),
         },
         'service_sessions': service_sessions_data,
         'workers': workers_data,
@@ -282,7 +282,7 @@ def subcategory_jasa(request, category_slug, subcategory_slug):
 @custom_login_required
 def view_pesanan(request):
     """
-    View untuk menampilkan daftar pesanan pengguna saat ini dengan opsi filtering dan searching.
+    View untuk menampilkan daftar pesanan pengguna saat ini.
     """
     logger.debug("view_pesanan view called.")
     user = request.session.get('user')
@@ -296,43 +296,15 @@ def view_pesanan(request):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # Ambil semua kategori dan subkategori untuk filter
-            cursor.execute("""
-                SELECT kj.NamaKategori, kj.Id, sj.NamaSubKategori, sj.Id
-                FROM KATEGORI_JASA kj
-                JOIN SUBKATEGORI_JASA sj ON kj.Id = sj.KategoriJasaId
-                ORDER BY kj.NamaKategori, sj.NamaSubKategori;
-            """)
-            categories = cursor.fetchall()
-            logger.debug(f"Fetched categories and subcategories for filtering: {categories}")
-
-            categories_data = []
-            for nama_kategori, kategori_id, nama_subkategori, subkategori_id in categories:
-                categories_data.append({
-                    'nama_kategori': nama_kategori,
-                    'id': kategori_id,
-                    'nama_subkategori': nama_subkategori,
-                    'id_subkategori': subkategori_id,
-                })
-
-            # Ambil filter dari request
-            filter_subcategory = request.GET.get('subcategory', '')
-            filter_status = request.GET.get('status', '')
-            search_query = request.GET.get('q', '')
-            logger.debug(f"Filters - Subcategory: {filter_subcategory}, Status: {filter_status}, Search query: {search_query}")
-
-            # Mapping status label to code
             status_mapping = {
                 'Menunggu Pembayaran': 'waiting_payment',
                 'Mencari Pekerja Terdekat': 'finding_worker',
-                'Pekerja Menuju Lokasi': 'in_progress',
-                'Pekerja Mulai Pekerjaan': 'in_progress',
-                'Pembayaran Selesai': 'completed',
-                'Pemesanan Selesai': 'completed',
-                'Pemesanan Dibatalkan': 'cancelled',
+                'Sedang Dikerjakan': 'in_progress',
+                'Pesanan Selesai': 'completed',
+                'Dibatalkan': 'cancelled',
             }
 
-            # Bangun query dasar dengan LEFT JOIN untuk mengambil status terbaru dan testimonial
+            # Perbaikan query untuk mengambil nama subkategori yang benar
             query = """
                 SELECT DISTINCT ON (tpj.Id) 
                     tpj.Id, 
@@ -346,49 +318,26 @@ def view_pesanan(request):
                     sl.Sesi AS service_session_name
                 FROM TR_PEMESANAN_JASA tpj
                 LEFT JOIN "USER" u ON tpj.IdPekerja = u.Id
-                JOIN SUBKATEGORI_JASA sj ON tpj.IdKategoriJasa = sj.Id
+                JOIN SUBKATEGORI_JASA sj ON tpj.IdKategoriJasa = sj.Id  -- Menggunakan IdKategoriJasa sebagai SubKategoriId
                 LEFT JOIN TR_PEMESANAN_STATUS tps ON tpj.Id = tps.IdTrPemesanan
                 LEFT JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
-                JOIN SESI_LAYANAN sl ON tpj.Sesi = sl.Sesi
+                JOIN SESI_LAYANAN sl ON tpj.Sesi = sl.Sesi AND sl.SubKategoriId = tpj.IdKategoriJasa
                 WHERE tpj.IdPelanggan = %s
+                ORDER BY tpj.Id, tps.TglWaktu DESC;
             """
             params = [user_id]
-
-            # Tambahkan filter jika ada
-            if filter_subcategory:
-                query += " AND sj.Id = %s"
-                params.append(filter_subcategory)
-                logger.debug(f"Applied filter_subcategory: {filter_subcategory}")
-
-            if filter_status:
-                # Find the status label corresponding to the status code
-                reverse_status_mapping = {v: k for k, v in status_mapping.items()}
-                status_label = reverse_status_mapping.get(filter_status, '')
-                if status_label:
-                    query += " AND sp.Status = %s"
-                    params.append(status_label)
-                    logger.debug(f"Applied filter_status: {filter_status} (mapped to '{status_label}')")
-                else:
-                    logger.warning(f"Unknown filter_status code: {filter_status}")
-
-            if search_query:
-                query += " AND sj.NamaSubKategori ILIKE %s"
-                params.append(f"%{search_query}%")
-                logger.debug(f"Applied search_query: {search_query}")
-
-            # Tambahkan ORDER BY setelah semua filter
-            query += " ORDER BY tpj.Id, tps.TglWaktu DESC;"
 
             cursor.execute(query, tuple(params))
             orders = cursor.fetchall()
             logger.debug(f"Fetched orders: {orders}")
 
-            reverse_status_mapping = {v: k for k, v in status_mapping.items()}
-
             orders_data = []
             for order in orders:
                 order_id, nama_subkategori, total_biaya, worker_name, status_label, has_testimonial, service_session_name = order
                 status_code = status_mapping.get(status_label, 'unknown')
+                
+                logger.debug(f"Processing order_id: {order_id}, nama_subkategori: {nama_subkategori}, status_label: {status_label}")
+
                 orders_data.append({
                     'id': order_id,
                     'nama_subkategori': nama_subkategori,
@@ -401,14 +350,13 @@ def view_pesanan(request):
 
         context = {
             'orders': orders_data,
-            'categories': categories_data,
         }
         logger.debug("Rendering view_pesanan.html dengan context.")
         return render(request, 'view_pesanan.html', context)
     except Exception as e:
         logger.exception("Error fetching orders.")
         messages.error(request, f"Error fetching orders: {str(e)}")
-        return render(request, 'view_pesanan.html', {'orders': [], 'categories': []})
+        return render(request, 'view_pesanan.html', {'orders': []})
     finally:
         conn.close()
         logger.debug("Database connection closed in view_pesanan view.")
@@ -433,12 +381,19 @@ def create_order(request):
 
     user_id = user.get('Id')
     session_id = request.POST.get('session_id')
+    subkategori_id = request.POST.get('subkategori_id')  # Field yang dikirim dari form
     order_date_str = request.POST.get('order_date')
     discount_code = request.POST.get('discount_code', '').strip()
     total_payment_str = request.POST.get('total_payment')
     payment_method = request.POST.get('payment_method', '').strip()
 
-    logger.debug(f"Order details - session_id: {session_id}, order_date: {order_date_str}, discount_code: {discount_code}, total_payment_str: {total_payment_str}, payment_method: {payment_method}")
+    logger.debug(f"Order details - session_id: {session_id}, subkategori_id: {subkategori_id}, order_date: {order_date_str}, discount_code: {discount_code}, total_payment_str: {total_payment_str}, payment_method: {payment_method}")
+
+    # Validasi input
+    if not subkategori_id:
+        logger.error("SubKategoriId tidak diberikan.")
+        messages.error(request, "Subkategori tidak valid.")
+        return redirect('homepage')
 
     try:
         order_date = datetime.strptime(order_date_str, '%d/%m/%Y').date()
@@ -449,10 +404,9 @@ def create_order(request):
         return redirect('homepage')
 
     try:
-        # Pastikan total_payment dalam satuan ribuan rupiah
         total_payment = float(total_payment_str.replace('Rp ', '').replace(',', ''))
         if total_payment < 1000:
-            total_payment *= 1000  # Konversi ke ribuan jika input kurang dari 1000
+            total_payment *= 1000
         logger.debug(f"Parsed total_payment: {total_payment}")
     except ValueError:
         logger.error("Invalid total_payment format.")
@@ -462,22 +416,26 @@ def create_order(request):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # Mengambil SubKategoriId berdasarkan session_id
+            # Mengambil informasi kategori dan subkategori berdasarkan session_id dan subkategori_id
             cursor.execute("""
-                SELECT s.SubKategoriId
+                SELECT 
+                    s.SubKategoriId,
+                    sj.KategoriJasaId,
+                    sj.NamaSubKategori
                 FROM SESI_LAYANAN s
-                WHERE s.Sesi = %s
-            """, (session_id,))
-            subkategori = cursor.fetchone()
-            if not subkategori:
-                logger.error("Sesi layanan tidak ditemukan.")
-                messages.error(request, "Sesi layanan tidak ditemukan.")
+                JOIN SUBKATEGORI_JASA sj ON s.SubKategoriId = sj.Id
+                WHERE s.Sesi = %s AND s.SubKategoriId = %s
+            """, (session_id, subkategori_id))
+            result = cursor.fetchone()
+            if not result:
+                logger.error("Sesi layanan atau SubKategoriId tidak ditemukan.")
+                messages.error(request, "Sesi layanan atau subkategori tidak ditemukan.")
                 return redirect('homepage')
 
-            subkategori_id = subkategori[0]
-            logger.debug(f"Identified SubKategoriId: {subkategori_id}")
+            subkategori_id_db, kategori_jasa_id, nama_subkategori = result
+            logger.debug(f"Identified SubKategoriId: {subkategori_id_db}, KategoriJasaId: {kategori_jasa_id}, NamaSubKategori: {nama_subkategori}")
 
-            # Validasi metode pembayaran menggunakan Id
+            # Validasi metode pembayaran
             cursor.execute("""
                 SELECT Nama FROM METODE_BAYAR WHERE Id = %s
             """, (payment_method,))
@@ -486,10 +444,10 @@ def create_order(request):
                 logger.error("Metode pembayaran tidak valid.")
                 messages.error(request, "Metode pembayaran tidak valid.")
                 return redirect('homepage')
-            metode_bayar_id = payment_method  # payment_method sekarang adalah Id
+            metode_bayar_id = payment_method
             logger.debug(f"Validated MetodeBayarId: {metode_bayar_id}")
 
-            # Validasi dan ambil ID diskon jika ada
+            # Validasi dan ambil ID diskon
             id_diskon = None
             if discount_code:
                 cursor.execute("""
@@ -505,7 +463,7 @@ def create_order(request):
                 id_diskon = discount_code
                 logger.debug(f"Applied discount: {potongan}, New total_payment: {total_payment}")
 
-            # Insert pesanan baru tanpa kolom Status
+            # Insert pesanan baru dengan menggunakan IdKategoriJasa sebagai SubKategoriId
             cursor.execute("""
                 INSERT INTO TR_PEMESANAN_JASA (
                     Id, TglPemesanan, TglPekerjaan, WaktuPekerjaan, TotalBiaya,
@@ -518,11 +476,11 @@ def create_order(request):
                 RETURNING Id;
             """, (
                 order_date,
-                order_date,  # Asumsi TglPekerjaan sama dengan TglPemesanan
+                order_date,
                 datetime.now(),
                 total_payment,
                 user_id,
-                subkategori_id,  # Menggunakan SubKategoriId sebagai IdKategoriJasa
+                subkategori_id_db,    # Menggunakan SubKategoriId sebagai IdKategoriJasa
                 session_id,
                 id_diskon,
                 metode_bayar_id,
@@ -530,7 +488,7 @@ def create_order(request):
             order_id = cursor.fetchone()[0]
             logger.debug(f"Inserted order dengan Id: {order_id}")
 
-            # Ambil Id Status 'Menunggu Pembayaran' dari STATUS_PEMESANAN
+            # Set status awal pesanan
             cursor.execute("""
                 SELECT Id FROM STATUS_PEMESANAN WHERE Status = 'Menunggu Pembayaran'
             """)
@@ -542,7 +500,6 @@ def create_order(request):
             status_id = status[0]
             logger.debug(f"Status ID untuk 'Menunggu Pembayaran': {status_id}")
 
-            # Insert status pesanan ke TR_PEMESANAN_STATUS
             cursor.execute("""
                 INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
                 VALUES (%s, %s, %s)
@@ -633,26 +590,15 @@ def join_service(request, subcategory_slug):
             cursor.execute("""
                 SELECT Id, NamaSubKategori, KategoriJasaId
                 FROM SUBKATEGORI_JASA
-            """)
-            subcategories = cursor.fetchall()
-            logger.debug(f"Fetched subcategories: {subcategories}")
-
-            subcategory = None
-            for sub in subcategories:
-                sub_id, nama_subkategori, kategori_jasa_id = sub
-                sub_slug = slugify(nama_subkategori).lower()
-                logger.debug(f"Checking subcategory: {nama_subkategori} with slug: {sub_slug}")
-                if sub_slug == subcategory_slug.lower():
-                    subcategory = sub
-                    logger.debug(f"Matched subcategory: {sub}")
-                    break
-
+                WHERE slug = %s
+            """, (subcategory_slug.lower(),))
+            subcategory = cursor.fetchone()
             if not subcategory:
                 logger.error(f"Subcategory dengan slug '{subcategory_slug}' tidak ditemukan.")
                 return JsonResponse({'success': False, 'error': 'Subcategory not found.'})
 
-            kategori_jasa_id = subcategory[2]
-            logger.debug(f"KategoriJasaId: {kategori_jasa_id}")
+            subkategori_id_db, nama_subkategori, kategori_jasa_id = subcategory
+            logger.debug(f"Matched subcategory: {subkategori_id_db}, {nama_subkategori}, {kategori_jasa_id}")
 
             # Insert ke tabel PEKERJA_KATEGORI_JASA
             cursor.execute("""
@@ -768,7 +714,7 @@ def create_testimonial(request):
             # Verifikasi pesanan
             cursor.execute("""
                 SELECT IdPelanggan FROM TR_PEMESANAN_JASA
-                WHERE Id = %s AND IdPelanggan = %s AND Status = 'completed'
+                WHERE Id = %s AND IdPelanggan = %s AND (SELECT sp.Status FROM TR_PEMESANAN_STATUS tps JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id WHERE tps.IdTrPemesanan = tpj.Id ORDER BY tps.TglWaktu DESC LIMIT 1) = 'Pesanan Selesai'
             """, (order_id, user_id))
             pesanan = cursor.fetchone()
             if not pesanan:
@@ -824,18 +770,14 @@ def cancel_order(request, order_id):
     logger.debug(f"User ID: {user_id} attempting to cancel order.")
 
     try:
-        # Jika order_id sudah berupa UUID, tidak perlu dikonversi lagi
-        if isinstance(order_id, uuid.UUID):
-            order_uuid = order_id
-        else:
-            # Validasi UUID jika order_id berupa string
+        # Validasi UUID jika order_id berupa string
+        try:
             order_uuid = uuid.UUID(order_id)
-    except (ValueError, AttributeError) as e:
-        logger.error(f"Invalid order_id format: {order_id}")
-        return JsonResponse({'success': False, 'error': 'ID pesanan tidak valid'}, status=400)
+        except (ValueError, AttributeError) as e:
+            logger.error(f"Invalid order_id format: {order_id}")
+            return JsonResponse({'success': False, 'error': 'ID pesanan tidak valid'}, status=400)
 
-    conn = get_db_connection()
-    try:
+        conn = get_db_connection()
         with conn.cursor() as cursor:
             # Ambil status terbaru dari TR_PEMESANAN_STATUS
             cursor.execute("""
@@ -882,5 +824,6 @@ def cancel_order(request, order_id):
         logger.exception("Error cancelling order.")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
     finally:
-        conn.close()
-        logger.debug("Database connection closed in cancel_order API.")
+        if 'conn' in locals():
+            conn.close()
+            logger.debug("Database connection closed in cancel_order API.")
