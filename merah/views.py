@@ -584,7 +584,7 @@ def status_pekerjaan_jasa(request):
         ("Menunggu Pekerja Terdekat", "Menunggu Pekerja Terdekat"),
         ("Pekerja Tiba di Lokasi", "Pekerja Tiba di Lokasi"),
         ("Pelayanan Jasa Sedang Dilakukan", "Pelayanan Jasa Sedang Dilakukan"),
-        ("Pesanan Selesai", "Pesanan Selesai"),
+        ("Pemesanan Selesai", "Pemesanan Selesai"),
         ("Pesanan Dibatalkan", "Pesanan Dibatalkan"),
     ]
     
@@ -640,7 +640,7 @@ def ubah_status_pesanan(request, pesanan_id, status_baru):
     status_transitions = {
         "Menunggu Pekerja Terdekat": "Pekerja Tiba di Lokasi",
         "Pekerja Tiba di Lokasi": "Pelayanan Jasa Sedang Dilakukan",
-        "Pelayanan Jasa Sedang Dilakukan": "Pesanan Selesai",
+        "Pelayanan Jasa Sedang Dilakukan": "Pemesanan Selesai",
     }
     
     # Verifikasi bahwa status_baru sesuai dengan transisi

@@ -57,7 +57,7 @@
                     <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Melakukan Pelayanan Jasa</button>
                 </form>
             {% elif pesanan.status == "Pelayanan Jasa Sedang Dilakukan" %}
-                <form method="post" action="{% url 'ubah_status_pesanan' pesanan.id 'Pesanan Selesai' %}">
+                <form method="post" action="{% url 'ubah_status_pesanan' pesanan.id 'Pemesanan Selesai' %}">
                     {% csrf_token %}
                     <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Selesai</button>
                 </form>
