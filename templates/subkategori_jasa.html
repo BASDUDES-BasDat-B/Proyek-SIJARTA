@@ -114,6 +114,7 @@
         <form id="orderForm" method="POST" action="{% url 'create_order' %}">
             {% csrf_token %}
             <input type="hidden" id="sessionId" name="session_id">
+            <input type="hidden" name="subkategori_id" value="{{ subcategory.id }}"> <!-- Tambahkan ini -->
             
             <!-- Tanggal Pemesanan -->
             <div class="mb-4">
