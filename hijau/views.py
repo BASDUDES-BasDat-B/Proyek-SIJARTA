@@ -730,7 +730,7 @@ def worker_profile(request, worker_id):
         return render(request, 'profile.html', context)
     except Exception as e:
         logger.exception("Error fetching worker profile.")
-        #messages.error(request, "Error fetching worker profile.")
+        # messages.error(request, "Error fetching worker profile.")
         return redirect('homepage')
     finally:
         conn.close()
