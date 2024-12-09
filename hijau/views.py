@@ -826,12 +826,8 @@ def cancel_order(request, order_id):
     logger.debug(f"User ID: {user_id} attempting to cancel order.")
 
     try:
-        # Validasi UUID jika order_id berupa string
-        try:
-            order_uuid = uuid.UUID(order_id)
-        except (ValueError, AttributeError) as e:
-            logger.error(f"Invalid order_id format: {order_id}")
-            return JsonResponse({'success': False, 'error': 'ID pesanan tidak valid'}, status=400)
+        # order_id sudah berupa objek UUID, tidak perlu diparse ulang
+        order_uuid = order_id
 
         conn = get_db_connection()
         with conn.cursor() as cursor:
@@ -843,7 +839,7 @@ def cancel_order(request, order_id):
                 WHERE tps.IdTrPemesanan = %s
                 ORDER BY tps.TglWaktu DESC
                 LIMIT 1;
-            """, (order_uuid,))
+            """, (str(order_uuid),))
             pesanan = cursor.fetchone()
             if not pesanan:
                 logger.error(f"Pesanan ID: {order_uuid} tidak ditemukan.")
@@ -869,14 +865,15 @@ def cancel_order(request, order_id):
             cursor.execute("""
                 INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
                 VALUES (%s, %s, %s);
-            """, (order_uuid, status_id, datetime.now()))
+            """, (str(order_uuid), status_id, datetime.now()))
             logger.debug(f"Inserted TR_PEMESANAN_STATUS untuk Pesanan ID: {order_uuid}.")
 
             conn.commit()
             logger.info(f"Pesanan ID: {order_uuid} berhasil dibatalkan.")
             return JsonResponse({'success': True})
     except Exception as e:
-        conn.rollback()
+        if 'conn' in locals():
+            conn.rollback()
         logger.exception("Error cancelling order.")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
     finally:
