@@ -1,3 +1,5 @@
+<!-- status_pekerjaan_jasa.html -->
+
 {% extends "base.html" %}
 
 {% block title %}Status Pekerjaan Jasa{% endblock %}
@@ -7,7 +9,7 @@
 <div class="bg-blue-500 text-white py-6 mb-6">
     <div class="max-w-4xl mx-auto px-4">
         <h1 class="text-2xl font-bold text-center">Status Pekerjaan Jasa</h1>
-        <p class="text-center mt-2">Pantau dan ubah status pesanan jasa yang sedang Anda kerjakan.</p>
+        <p class="text-center mt-2">Pantau dan ubah status pesanan jasa yang sedang Anda kerjakan saat ini.</p>
     </div>
 </div>
 
@@ -41,15 +43,26 @@
         <p><strong>Tanggal Pekerjaan:</strong> {{ pesanan.tanggal_pekerjaan }}</p>
         <p><strong>Total Biaya:</strong> Rp {{ pesanan.total_biaya }}</p>
         <p><strong>Status:</strong> {{ pesanan.status }}</p>
-
+        
         <!-- Tombol Status -->
         <div class="flex justify-center gap-4 mt-4">
-            {% if pesanan.status == "Mencari Pekerja Terdekat" %}
-                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pekerja Menuju Lokasi' %}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Tiba Di Lokasi</a>
-            {% elif pesanan.status == "Pekerja Menuju Lokasi" %}
-                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pekerja Mulai Pekerjaan' %}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Melakukan Pelayanan Jasa</a>
-            {% elif pesanan.status == "Pekerja Mulai Pekerjaan" %}
-                <a href="{% url 'ubah_status_pesanan' pesanan.id 'Pemesanan Selesai' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Selesai</a>
+            {% if pesanan.status == "Menunggu Pekerja Terdekat" %}
+                <form method="post" action="{% url 'ubah_status_pesanan' pesanan.id 'Pekerja Tiba di Lokasi' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Tiba Di Lokasi</button>
+                </form>
+            {% elif pesanan.status == "Pekerja Tiba di Lokasi" %}
+                <form method="post" action="{% url 'ubah_status_pesanan' pesanan.id 'Pelayanan Jasa Sedang Dilakukan' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Melakukan Pelayanan Jasa</button>
+                </form>
+            {% elif pesanan.status == "Pelayanan Jasa Sedang Dilakukan" %}
+                <form method="post" action="{% url 'ubah_status_pesanan' pesanan.id 'Pesanan Selesai' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Selesai</button>
+                </form>
+            {% else %}
+                <button class="bg-gray-500 text-white px-4 py-2 rounded cursor-not-allowed" disabled>Selesai</button>
             {% endif %}
         </div>
     </div>
