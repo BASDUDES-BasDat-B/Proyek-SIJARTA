@@ -282,7 +282,7 @@ def subcategory_jasa(request, category_slug, subcategory_slug):
 @custom_login_required
 def view_pesanan(request):
     """
-    View untuk menampilkan daftar pesanan pengguna saat ini.
+    View untuk menampilkan daftar pesanan pengguna saat ini dengan fitur filter dan search.
     """
     logger.debug("view_pesanan view called.")
     user = request.session.get('user')
@@ -293,18 +293,41 @@ def view_pesanan(request):
 
     user_id = user.get('Id')
     logger.debug(f"Viewing orders for user_id: {user_id}")
+
+    # Ambil parameter filter dan search dari GET
+    filter_subcategory = request.GET.get('subcategory', '').strip()
+    filter_status = request.GET.get('status', '').strip()
+    search_query = request.GET.get('q', '').strip()
+
+    logger.debug(f"Filter parameters - Subcategory: {filter_subcategory}, Status: {filter_status}, Search Query: {search_query}")
+
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            status_mapping = {
-                'Menunggu Pembayaran': 'waiting_payment',
-                'Mencari Pekerja Terdekat': 'finding_worker',
-                'Sedang Dikerjakan': 'in_progress',
-                'Pesanan Selesai': 'completed',
-                'Dibatalkan': 'cancelled',
-            }
 
-            # Perbaikan query untuk mengambil nama subkategori yang benar
+            # Ambil semua subkategori yang tersedia untuk pengguna
+            cursor.execute("""
+                SELECT DISTINCT sj.Id, sj.NamaSubKategori
+                FROM TR_PEMESANAN_JASA tpj
+                JOIN SUBKATEGORI_JASA sj ON tpj.IdKategoriJasa = sj.Id
+                WHERE tpj.IdPelanggan = %s
+                ORDER BY sj.NamaSubKategori;
+            """, (user_id,))
+            subcategories = cursor.fetchall()
+            subcategories_data = [{'id': sub[0], 'nama_subkategori': sub[1]} for sub in subcategories]
+            logger.debug(f"Available subcategories for filtering: {subcategories_data}")
+
+            # Definisikan status yang tersedia
+            status_options = [
+                {'value': '', 'label': 'Semua Status'},
+                {'value': 'Menunggu Pembayaran', 'label': 'Menunggu Pembayaran'},
+                {'value': 'Mencari Pekerja Terdekat', 'label': 'Mencari Pekerja Terdekat'},
+                {'value': 'Sedang Dikerjakan', 'label': 'Sedang Dikerjakan'},
+                {'value': 'Pesanan Selesai', 'label': 'Pesanan Selesai'},
+                {'value': 'Dibatalkan', 'label': 'Dibatalkan'},
+            ]
+
+            # Bangun query dasar
             query = """
                 SELECT DISTINCT ON (tpj.Id) 
                     tpj.Id, 
@@ -318,14 +341,38 @@ def view_pesanan(request):
                     sl.Sesi AS service_session_name
                 FROM TR_PEMESANAN_JASA tpj
                 LEFT JOIN "USER" u ON tpj.IdPekerja = u.Id
-                JOIN SUBKATEGORI_JASA sj ON tpj.IdKategoriJasa = sj.Id  -- Menggunakan IdKategoriJasa sebagai SubKategoriId
+                JOIN SUBKATEGORI_JASA sj ON tpj.IdKategoriJasa = sj.Id
                 LEFT JOIN TR_PEMESANAN_STATUS tps ON tpj.Id = tps.IdTrPemesanan
                 LEFT JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
                 JOIN SESI_LAYANAN sl ON tpj.Sesi = sl.Sesi AND sl.SubKategoriId = tpj.IdKategoriJasa
                 WHERE tpj.IdPelanggan = %s
-                ORDER BY tpj.Id, tps.TglWaktu DESC;
             """
+
             params = [user_id]
+
+            # Tambahkan filter subkategori jika dipilih
+            if filter_subcategory:
+                query += " AND sj.Id = %s"
+                params.append(filter_subcategory)
+                logger.debug(f"Applying subcategory filter: {filter_subcategory}")
+
+            # Tambahkan filter status jika dipilih
+            if filter_status:
+                query += " AND sp.Status = %s"
+                params.append(filter_status)
+                logger.debug(f"Applying status filter: {filter_status}")
+
+            # Tambahkan pencarian jika ada
+            if search_query:
+                query += " AND sj.NamaSubKategori ILIKE %s"
+                params.append(f"%{search_query}%")
+                logger.debug(f"Applying search filter: {search_query}")
+
+            # Tambahkan ORDER BY untuk DISTINCT ON
+            query += " ORDER BY tpj.Id, tps.TglWaktu DESC;"
+
+            logger.debug(f"Final SQL Query: {query}")
+            logger.debug(f"Query Parameters: {params}")
 
             cursor.execute(query, tuple(params))
             orders = cursor.fetchall()
@@ -334,8 +381,7 @@ def view_pesanan(request):
             orders_data = []
             for order in orders:
                 order_id, nama_subkategori, total_biaya, worker_name, status_label, has_testimonial, service_session_name = order
-                status_code = status_mapping.get(status_label, 'unknown')
-                
+
                 logger.debug(f"Processing order_id: {order_id}, nama_subkategori: {nama_subkategori}, status_label: {status_label}")
 
                 orders_data.append({
@@ -344,15 +390,25 @@ def view_pesanan(request):
                     'service_session_name': service_session_name,
                     'total_payment': float(total_biaya),
                     'worker_name': worker_name or "Belum ada pekerja",
-                    'status': status_code,
+                    'status': status_label,  # Use status_label directly without mapping
                     'has_testimonial': has_testimonial,
                 })
+                
+            print(orders)
 
-        context = {
-            'orders': orders_data,
-        }
-        logger.debug("Rendering view_pesanan.html dengan context.")
-        return render(request, 'view_pesanan.html', context)
+            context = {
+                'orders': orders_data,
+                'subcategories': subcategories_data,
+                'status_options': status_options,
+                'current_filters': {
+                    'subcategory': filter_subcategory,
+                    'status': filter_status,
+                    'q': search_query,
+                }
+            }
+            logger.debug(f"Context data prepared: {context}")
+
+            return render(request, 'view_pesanan.html', context)
     except Exception as e:
         logger.exception("Error fetching orders.")
         messages.error(request, f"Error fetching orders: {str(e)}")
