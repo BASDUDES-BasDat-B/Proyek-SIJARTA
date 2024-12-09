@@ -394,7 +394,7 @@ def view_pesanan(request):
                     'has_testimonial': has_testimonial,
                 })
                 
-            print(orders)
+            # print(orders)
 
             context = {
                 'orders': orders_data,
@@ -737,47 +737,54 @@ def worker_profile(request, worker_id):
         logger.debug("Database connection closed in worker_profile view.")
 
 @require_POST
-@login_required
+@custom_login_required
 def create_testimonial(request):
     """
-    API View untuk membuat testimoni untuk pesanan tertentu.
+    View untuk membuat testimoni untuk pesanan tertentu.
     """
-    logger.debug("create_testimonial API called.")
+    logger.debug("create_testimonial called.")
     user = request.session.get('user')
     if not user:
         logger.warning("Unauthenticated user attempted to create testimonial.")
-        return JsonResponse({'success': False, 'error': 'User not authenticated'}, status=401)
-
+        messages.error(request, "Anda harus login untuk memberikan testimoni.")
+        return redirect('login')
+    
     user_id = user.get('Id')
     logger.debug(f"User ID: {user_id} attempting to create testimonial.")
-
+    
     try:
-        data = json.loads(request.body)
-        order_id = data.get('order_id')
-        rating = int(data.get('rating', 0))
-        testimonial_text = data.get('testimonial', '').strip()
+        order_id = request.POST.get('order_id')
+        rating = int(request.POST.get('rating', 0))
+        testimonial_text = request.POST.get('testimonial', '').strip()
         logger.debug(f"Received testimonial data - order_id: {order_id}, rating: {rating}, testimonial_text: {testimonial_text}")
-
+    
         if not order_id or not testimonial_text:
             logger.error("Incomplete testimonial data received.")
-            return JsonResponse({'success': False, 'error': 'Data tidak lengkap'}, status=400)
-
+            messages.error(request, "Data testimoni tidak lengkap.")
+            return redirect('view_pesanan')
+    
         if rating < 1 or rating > 5:
             logger.error("Invalid rating value received.")
-            return JsonResponse({'success': False, 'error': 'Rating harus antara 1 dan 5'}, status=400)
-
+            messages.error(request, "Rating harus antara 1 dan 5.")
+            return redirect('view_pesanan')
+    
         conn = get_db_connection()
         with conn.cursor() as cursor:
             # Verifikasi pesanan
             cursor.execute("""
-                SELECT IdPelanggan FROM TR_PEMESANAN_JASA
-                WHERE Id = %s AND IdPelanggan = %s AND (SELECT sp.Status FROM TR_PEMESANAN_STATUS tps JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id WHERE tps.IdTrPemesanan = tpj.Id ORDER BY tps.TglWaktu DESC LIMIT 1) = 'Pesanan Selesai'
+                SELECT tpj.IdPelanggan FROM TR_PEMESANAN_JASA tpj
+                WHERE tpj.Id = %s AND tpj.IdPelanggan = %s AND (
+                    SELECT sp.Status FROM TR_PEMESANAN_STATUS tps
+                    JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
+                    WHERE tps.IdTrPemesanan = tpj.Id ORDER BY tps.TglWaktu DESC LIMIT 1
+                ) = 'Pemesanan Selesai'
             """, (order_id, user_id))
             pesanan = cursor.fetchone()
             if not pesanan:
                 logger.error(f"Pesanan ID: {order_id} tidak valid atau belum selesai.")
-                return JsonResponse({'success': False, 'error': 'Pesanan tidak valid atau belum selesai'}, status=400)
-
+                messages.error(request, "Pesanan tidak valid atau belum selesai.")
+                return redirect('view_pesanan')
+    
             # Cek apakah sudah ada testimoni
             cursor.execute("""
                 SELECT 1 FROM TESTIMONI
@@ -785,8 +792,9 @@ def create_testimonial(request):
             """, (order_id,))
             if cursor.fetchone():
                 logger.info(f"Testimoni sudah dibuat untuk Pesanan ID: {order_id}")
-                return JsonResponse({'success': False, 'error': 'Testimoni sudah dibuat untuk pesanan ini'}, status=400)
-
+                messages.error(request, "Anda sudah memberikan testimoni untuk pesanan ini.")
+                return redirect('view_pesanan')
+    
             # Insert testimoni
             cursor.execute("""
                 INSERT INTO TESTIMONI (IdTrPemesanan, Tgl, Teks, Rating)
@@ -794,22 +802,18 @@ def create_testimonial(request):
             """, (order_id, datetime.now().date(), testimonial_text, rating))
             conn.commit()
             logger.debug(f"Testimoni berhasil dibuat untuk Pesanan ID: {order_id}")
-
-            return JsonResponse({'success': True})
-    except json.JSONDecodeError:
-        logger.exception("Invalid JSON received in create_testimonial.")
-        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
-    except ValueError:
-        logger.exception("Invalid rating value received in create_testimonial.")
-        return JsonResponse({'success': False, 'error': 'Rating harus berupa angka'}, status=400)
+            messages.success(request, "Testimoni berhasil dibuat.")
+            return redirect('view_pesanan')
     except Exception as e:
-        conn.rollback()
+        if 'conn' in locals():
+            conn.rollback()
         logger.exception("Error creating testimonial.")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        messages.error(request, f"Terjadi kesalahan saat membuat testimoni: {str(e)}")
+        return redirect('view_pesanan')
     finally:
         if 'conn' in locals():
             conn.close()
-            logger.debug("Database connection closed in create_testimonial API.")
+            logger.debug("Database connection closed in create_testimonial.")
 
 @require_POST
 @custom_login_required
