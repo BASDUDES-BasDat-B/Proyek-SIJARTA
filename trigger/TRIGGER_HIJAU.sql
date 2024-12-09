@@ -8,10 +8,10 @@ DECLARE
     v_status_mencari UUID;
     v_latest_status UUID;
 BEGIN
-    -- Ambil ID status 'Dibatalkan'
+    -- Ambil ID status 'Pemesanan Dibatalkan'
     SELECT Id INTO v_status_dibatalkan
     FROM STATUS_PEMESANAN
-    WHERE Status = 'Dibatalkan'
+    WHERE Status = 'Pemesanan Dibatalkan'
     LIMIT 1;
 
     -- Ambil ID status 'Mencari Pekerja Terdekat'
@@ -20,7 +20,7 @@ BEGIN
     WHERE Status = 'Mencari Pekerja Terdekat'
     LIMIT 1;
 
-    -- Periksa apakah NEW.IdStatus adalah 'Dibatalkan'
+    -- Periksa apakah NEW.IdStatus adalah 'Pemesanan Dibatalkan'
     IF NEW.IdStatus = v_status_dibatalkan THEN
         -- Ambil status terakhir sebelum insert
         SELECT IdStatus INTO v_latest_status

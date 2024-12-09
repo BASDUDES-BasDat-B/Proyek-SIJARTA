@@ -86,7 +86,7 @@
                                     class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                                 Batalkan
                             </button>
-                            {% elif order.status == 'Pesanan Selesai' and not order.has_testimonial %}
+                            {% elif order.status == 'Pemesanan Selesai' and not order.has_testimonial %}
                             <button onclick="showTestimonialModal('{{ order.id }}')"
                                     class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                                 Buat Testimoni
@@ -112,7 +112,7 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="testimonialForm" method="POST" action="{{ create_testimonial_url }}">
+        <form id="testimonialForm" method="POST" action="{% url 'create_testimonial' %}">
             {% csrf_token %}
             <input type="hidden" id="orderId" name="order_id">
             
@@ -124,26 +124,26 @@
                     {% for i in "12345" %}
                     <button type="button" 
                             onclick='setRating({{ i }})'
-                            class="text-2xl text-gray-400 hover:text-yellow-500 focus:text-yellow-500">
+                            class="rating-star text-2xl text-gray-400 hover:text-yellow-500 focus:text-yellow-500">
                         ★
                     </button>
                     {% endfor %}
                 </div>
                 <input type="hidden" id="rating" name="rating" required>
             </div>
-
+        
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">
                     Testimoni
                 </label>
-                <textarea name="testimonial" required
+                <textarea id="testimonialText" name="testimonial"
                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           rows="4"></textarea>
             </div>
-
+        
             <div class="flex justify-end">
                 <button type="submit" 
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                     Kirim Testimoni
                 </button>
             </div>
@@ -156,7 +156,8 @@
 function showTestimonialModal(orderId) {
     document.getElementById('orderId').value = orderId;
     document.getElementById('rating').value = 0; // Reset rating
-    const stars = document.querySelectorAll('#testimonialForm button');
+    document.getElementById('testimonialText').value = ''; // Reset testimonial text
+    const stars = document.querySelectorAll('#testimonialForm .rating-star');
     stars.forEach(star => {
         star.classList.remove('text-yellow-500');
         star.classList.add('text-gray-400');
