@@ -6,39 +6,51 @@ DECLARE
     v_total_biaya DECIMAL;
     v_id_pekerja UUID;
     v_kategori_tr UUID;
+    status_name VARCHAR;
 BEGIN
-    IF NEW.status = 'Pesanan selesai' THEN  -- Lanjutkan jika status adalah "Pesanan selesai"
-    
-        -- Select total biaya dan id pekerja dari TR_PEMESANAN_JASA dan masukkan ke variabel total biaya dan id pekerja
-        SELECT TR_J.TotalBiaya, TR_J.IdPekerja INTO v_total_biaya, v_id_pekerja
-        FROM STATUS_PESANAN AS S
-        LEFT JOIN TR_PEMESANAN_STATUS AS TR_S
-            ON S.Id = TR_S.IdStatus
-        LEFT JOIN TR_PEMESANAN_JASA AS TR_J
-            ON TR_S.IdTrPemesanan = TR_J.Id
-        WHERE S.Id = NEW.Id;
+    -- Ambil nama status dari tabel status_pemesanan berdasarkan idstatus baru
+    SELECT status INTO status_name 
+    FROM status_pemesanan 
+    WHERE id = NEW.idstatus;
 
-        -- Select id kategori transaksi dari KATEGORI_TR_MYPAY dan masukkan ke variabel kategori transaksi
-        SELECT Id INTO v_kategori_tr
-        FROM KATEGORI_TR_MYPAY
-        WHERE Nama = 'menerima honor transaksi jasa';
+    RAISE NOTICE 'Status name: %', status_name;
 
-        -- Masukkan transaksi ke TR_MYPAY
-        INSERT INTO TR_MYPAY (Id, UserId, Tgl, Nominal, KategoriId)
+    -- Jika status adalah 'Pemesanan Selesai', lanjutkan proses pembayaran
+    IF status_name = 'Pemesanan Selesai' THEN
+        -- Ambil total biaya dan id pekerja dari tr_pemesanan_jasa berdasarkan idtrpemesanan
+        SELECT tj.totalbiaya, tj.idpekerja INTO v_total_biaya, v_id_pekerja
+        FROM tr_pemesanan_jasa tj
+        WHERE tj.id = NEW.idtrpemesanan;
+
+        RAISE NOTICE 'Total Biaya: %, ID Pekerja: %', v_total_biaya, v_id_pekerja;
+
+        -- Ambil id kategori transaksi dari kategori_tr_mypay
+        SELECT id INTO v_kategori_tr
+        FROM kategori_tr_mypay
+        WHERE nama = 'Menerima Honor';
+
+        RAISE NOTICE 'Kategori Transaksi ID: %', v_kategori_tr;
+
+        -- Masukkan transaksi ke tr_mypay
+        INSERT INTO tr_mypay (id, userid, tgl, nominal, kategoriid)
         VALUES (gen_random_uuid(), v_id_pekerja, CURRENT_DATE, v_total_biaya, v_kategori_tr);
 
+        RAISE NOTICE 'Inserted transaksi ke tr_mypay';
+
         -- Update saldo MyPay pekerja
-        UPDATE USER
-        SET SaldoMyPay = SaldoMyPay + v_total_biaya
-        WHERE Id = v_id_pekerja;
+        UPDATE "USER"
+        SET saldomypay = saldomypay + v_total_biaya
+        WHERE id = v_id_pekerja;
+
+        RAISE NOTICE 'Updated SaldoMyPay untuk pekerja_id: %', v_id_pekerja;
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Membuat trigger ketika adanya update status pesanan dengan mengeksekusi Stored Procedure
+
 CREATE TRIGGER trg_status_update
-AFTER INSERT ON STATUS_PESANAN
+AFTER INSERT ON tr_pemesanan_status
 FOR EACH ROW
 EXECUTE FUNCTION proses_pembayaran_pekerja();
