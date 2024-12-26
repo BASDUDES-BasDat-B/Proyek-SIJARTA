@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 import uuid
 from datetime import datetime, timedelta
 import logging
+from utils.decorators import custom_login_required
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ def execute_query(sql_query, params=None):
             return cursor.fetchall()
         
 
-#@login_required(login_url='/login/')
+@custom_login_required
 def transaksi_list(request):
     user_id = request.session['user']['Id']  # Get the currently logged-in user's ID
 

@@ -207,7 +207,7 @@ def subcategory_jasa(request, category_slug, subcategory_slug):
                 JOIN "USER" u ON tpj.IdPelanggan = u.Id
                 WHERE tpj.IdKategoriJasa = %s
                 ORDER BY t.Tgl DESC;
-            """, (category_id,))
+            """, (sub_id,))
             testimonials = cursor.fetchall()
             logger.debug(f"Fetched testimonials for KategoriJasaId {category_id}: {testimonials}")
             testimonials_data = [
@@ -638,6 +638,8 @@ def join_service(request, subcategory_slug):
 
     user_id = user.get('Id')
     logger.debug(f"Worker ID: {user_id} attempting to join service.")
+    
+    subcategory_name = subcategory_slug.replace('-', ' ').lower()
 
     conn = get_db_connection()
     try:
@@ -646,8 +648,8 @@ def join_service(request, subcategory_slug):
             cursor.execute("""
                 SELECT Id, NamaSubKategori, KategoriJasaId
                 FROM SUBKATEGORI_JASA
-                WHERE slug = %s
-            """, (subcategory_slug.lower(),))
+                WHERE LOWER(namasubkategori) = %s
+            """, (subcategory_name,))
             subcategory = cursor.fetchone()
             if not subcategory:
                 logger.error(f"Subcategory dengan slug '{subcategory_slug}' tidak ditemukan.")
@@ -676,7 +678,7 @@ def join_service(request, subcategory_slug):
     finally:
         conn.close()
         logger.debug("Database connection closed in join_service API.")
-
+        
 def worker_profile(request, worker_id):
     """
     View untuk menampilkan profil pekerja.
