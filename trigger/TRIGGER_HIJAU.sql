@@ -7,6 +7,7 @@ DECLARE
     v_status_dibatalkan UUID;
     v_status_mencari UUID;
     v_latest_status UUID;
+    v_kategori_refund UUID;
 BEGIN
     -- Ambil ID status 'Pemesanan Dibatalkan'
     SELECT Id INTO v_status_dibatalkan
@@ -20,13 +21,19 @@ BEGIN
     WHERE Status = 'Mencari Pekerja Terdekat'
     LIMIT 1;
 
+    -- Ambil ID kategori 'Refund'
+    SELECT Id INTO v_kategori_refund
+    FROM KATEGORI_TR_MYPAY
+    WHERE Nama = 'Refund'
+    LIMIT 1;
+
     -- Periksa apakah NEW.IdStatus adalah 'Pemesanan Dibatalkan'
     IF NEW.IdStatus = v_status_dibatalkan THEN
         -- Ambil status terakhir sebelum insert
         SELECT IdStatus INTO v_latest_status
         FROM TR_PEMESANAN_STATUS
         WHERE IdTrPemesanan = NEW.IdTrPemesanan
-          AND TglWaktu < NEW.TglWaktu
+        AND TglWaktu < NEW.TglWaktu
         ORDER BY TglWaktu DESC
         LIMIT 1;
 
@@ -42,6 +49,10 @@ BEGIN
             UPDATE "USER"
             SET SaldoMyPay = SaldoMyPay + v_nominal
             WHERE Id = v_id_pelanggan;
+
+            -- Insert transaksi refund ke TR_MYPAY
+            INSERT INTO TR_MYPAY (Id, UserId, Tgl, Nominal, KategoriId)
+            VALUES (uuid_generate_v4(), v_id_pelanggan, NOW(), v_nominal, v_kategori_refund);
         ELSE
             RAISE EXCEPTION 'Pesanan tidak dapat dibatalkan karena tidak dalam status "Mencari Pekerja Terdekat".';
         END IF;
@@ -52,6 +63,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Membuat ulang trigger tanpa kondisi WHEN
+DROP TRIGGER IF EXISTS after_status_dibatalkan ON TR_PEMESANAN_STATUS;
 CREATE TRIGGER after_status_dibatalkan
 AFTER INSERT ON TR_PEMESANAN_STATUS
 FOR EACH ROW
